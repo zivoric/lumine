@@ -57,7 +57,7 @@ dependencies {
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
-    implementation "net.fabricmc:yarn:${project.yarn_version}"
+    //implementation "net.fabricmc:yarn:${project.yarn_version}"
     /*enigmaRuntime "cuchaz:enigma-swing:${project.enigma_version}"
 	enigmaRuntime "net.fabricmc:stitch:${project.stitch_version}"*/
 }
@@ -73,9 +73,10 @@ def tempDir = file(".gradle/temp")
 def localMap = file(".gradle/mappings/tiny.local")
 def mappingsDir = file("mappings")
 def manifestPath =	".gradle/manifest/${minecraft_version}"
-def mergedFile = file("${minecraft_version}-merged.jar")
-def intermediaryJar = file("${minecraft_version}-intermediary.jar")
-def namedJar = file("${minecraft_version}-named.jar")
+def mergedFile = new File(cacheFilesMinecraft, "${minecraft_version}-merged.jar")
+def mergedIntermediary = new File(cacheFilesMinecraft, "${minecraft_version}-merged-intermediary.jar")
+def intermediaryJar = new File(cacheFilesMinecraft, "${minecraft_version}-intermediary.jar")
+def namedJar = new File(cacheFilesMinecraft, "${minecraft_version}-named.jar")
 def versionFile = new File(file(manifestPath), "${minecraft_version}.json")
 def versionFile2 = new File(file(manifestPath), "version.json")
 def clientJar = new File(cacheFilesMinecraft, "${minecraft_version}-client.jar")
@@ -97,8 +98,8 @@ import net.fabricmc.stitch.commands.CommandReorderTiny
 import net.fabricmc.stitch.commands.CommandRewriteIntermediary
 import net.fabricmc.stitch.commands.tinyv2.CommandMergeTinyV2
 import net.fabricmc.stitch.commands.tinyv2.CommandProposeV2FieldNames
-import net.fabricmc.stitch.commands.tinyv2.CommandReorderTinyV2
-import net.fabricmc.stitch.merge.JarMerger*/
+import net.fabricmc.stitch.commands.tinyv2.CommandReorderTinyV2*/
+import net.fabricmc.stitch.merge.JarMerger
 import net.fabricmc.tinyremapper.OutputConsumerPath
 import net.fabricmc.tinyremapper.TinyRemapper
 import net.fabricmc.tinyremapper.TinyUtils
@@ -237,13 +238,34 @@ task downloadMcLibs(dependsOn: downloadWantedVersionManifest) {
 
 		version.libraries.each {
 			def downloadUrl = it.downloads.artifact.url
-
+			def str = downloadUrl.substring(downloadUrl.lastIndexOf("/") + 1)
 			download {
 				src downloadUrl
-				dest new File(libraries, downloadUrl.substring(downloadUrl.lastIndexOf("/") + 1))
+				dest new File(libraries, str)
 				overwrite false
 			}
+			project.dependencies.add("implementation", files(".gradle/minecraft/libraries/" + str))
 		}
+	}
+}
+
+task mergeJars(dependsOn: downloadMcJars) {
+	group = setupGroup
+	description = 'Merges client and server jarfiles.'
+	inputs.files downloadMcJars.outputs.files.files
+	outputs.file(mergedFile)
+
+	doLast {
+		logger.lifecycle(":merging jars")
+		def merged = mergedFile
+		
+		if (merged.exists()) {
+			return
+		}
+
+		def jarMerger = new JarMerger(clientJar, serverJar, merged)
+		jarMerger.merge()
+		jarMerger.close()
 	}
 }
 
@@ -275,6 +297,16 @@ void mapJar(File output, File input, File mappings, File libraries, String from,
 	}
 }
 
+task addMinecraftDependency() {
+	dependsOn 'mergeJars'
+	dependsOn 'downloadMcLibs'
+	doLast {
+	mapJar(mergedIntermediary, mergedFile, localMap, libraries, "official", "intermediary")
+	mapJar(namedJar, mergedIntermediary, localMap, libraries, "intermediary", "named")
+	project.dependencies.add("implementation", files(".gradle/minecraft/${minecraft_version}-named.jar"))
+	}
+}
+
 task createVersionJson(dependsOn: downloadMcJars, type: Copy) {
 	outputs.file(versionFile2)
 	group = setupGroup
@@ -287,6 +319,7 @@ task createVersionJson(dependsOn: downloadMcJars, type: Copy) {
 
 task updateVersionJson() {
 dependsOn 'createVersionJson'
+	doLast {
 	if (!versionFile.exists() || !versionFile2.exists()) {
 		throw new RuntimeException("Version file(s) do not exist")
 	}
@@ -301,6 +334,7 @@ dependsOn 'createVersionJson'
 	def versionBuilder = new JsonBuilder(versionJson)
 	FileUtils.write(file(manifestPath + "/${minecraft_patch_name}.json"), clientBuilder.toString(), StandardCharsets.UTF_8)
 	FileUtils.write(file(manifestPath + "/version.json"), versionBuilder.toPrettyString(), StandardCharsets.UTF_8)
+	}
 }
 
 task getConduitClient(type: Jar) {
@@ -310,8 +344,9 @@ task getConduitClient(type: Jar) {
 	description = 'Builds the conduit server jarfile.'
 	dependsOn 'obfuscateConduit'
 	dependsOn 'build'
-	dependsOn 'downloadMcLibs'
-	dependsOn 'downloadMcJars'
+	//dependsOn 'downloadMcLibs'
+	//dependsOn 'downloadMcJars'
+	dependsOn 'addMinecraftDependency'
 	archiveFileName = "${minecraft_patch_name}.jar"
 	destinationDirectory = buildFiles
 	doLast {
@@ -335,8 +370,9 @@ task getConduitServer(type: Jar) {
 	description = 'Builds the conduit server jarfile.'
 	dependsOn 'build'
 	dependsOn 'obfuscateConduit'
-	dependsOn 'downloadMcLibs'
-	dependsOn 'downloadMcJars'
+	//dependsOn 'downloadMcLibs'
+	//dependsOn 'downloadMcJars'
+	dependsOn 'addMinecraftDependency'
 	archiveFileName = "${minecraft_patch_name}-server.jar"
 	destinationDirectory = buildFiles
 	doLast {
@@ -508,27 +544,6 @@ task downloadIntermediary(type: Download) {
 	def url = "https://github.com/FabricMC/intermediary/raw/master/mappings/${minecraft_version}.tiny"
 	src com.google.common.net.UrlEscapers.urlFragmentEscaper().escape(url)
 	dest new File(cacheFilesMinecraft, "${minecraft_version}-intermediary.tiny")
-}
-
-task mergeJars(dependsOn: downloadMcJars) {
-	group = setupGroup
-	inputs.files downloadMcJars.outputs.files.files
-	outputs.file(mergedFile)
-
-	doLast {
-		logger.lifecycle(":merging jars")
-		def client = inputs.files.files.find { it.name.endsWith("-client.jar") }
-		def server = inputs.files.files.find { it.name.endsWith("-server.jar") }
-		def merged = mergedFile
-
-		if (merged.exists()) {
-			return
-		}
-
-		def jarMerger = new JarMerger(client, server, merged)
-		jarMerger.merge()
-		jarMerger.close()
-	}
 }
 
 class FileOutput extends DefaultTask {
