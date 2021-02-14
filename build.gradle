@@ -12,6 +12,8 @@ buildscript {
 		classpath 'de.undercouch:gradle-download-task:4.0.4'
 		classpath "net.fabricmc:stitch:${project.stitch_version}"
 		//classpath "cuchaz:enigma-cli:${project.enigma_version}"
+		classpath fileTree(dir: 'libs', include: 'recaf-2.17.5.jar')
+    	classpath fileTree(dir: 'libs', include: 'BytecodeInjector.jar')
 	}
 }
 
@@ -23,8 +25,9 @@ plugins {
 }
 
 def minecraft_version = "1.16.5"
+def yarn_version = "${minecraft_version}+build.${project.yarn_build}"
 def minecraft_patch_name = "${minecraft_version}-conduit_${project.conduit_patch}"
-def minecraft_patch_Title = "${minecraft_version}-Conduit_${project.conduit_patch}"
+def minecraft_patch_title = "${minecraft_version}-Conduit_${project.conduit_patch}"
 
 repositories {
     // Use jcenter for resolving dependencies.
@@ -41,15 +44,6 @@ repositories {
 	}
 }
 
-configurations {
-	/*enigmaRuntime {
-		resolutionStrategy {
-			cacheDynamicVersionsFor 0, "seconds"
-			cacheChangingModulesFor 0, "seconds"
-		}
-	}*/
-}
-
 dependencies {
     // This dependency is exported to consumers, that is to say found on their compile classpath.
     //api 'org.apache.commons:commons-math3:3.6.1'
@@ -57,9 +51,9 @@ dependencies {
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
-    //implementation "net.fabricmc:yarn:${project.yarn_version}"
-    /*enigmaRuntime "cuchaz:enigma-swing:${project.enigma_version}"
-	enigmaRuntime "net.fabricmc:stitch:${project.stitch_version}"*/
+    //implementation "net.fabricmc:yarn:${yarn_version}"
+    //implementation fileTree(dir: 'libs', include: 'recaf-2.17.5.jar')
+    //implementation fileTree(dir: 'libs', include: 'BytecodeInjector.jar')
 }
 
 def setupGroup = "setup"
@@ -76,35 +70,39 @@ def manifestPath =	".gradle/manifest/${minecraft_version}"
 def mergedFile = new File(cacheFilesMinecraft, "${minecraft_version}-merged.jar")
 def mergedIntermediary = new File(cacheFilesMinecraft, "${minecraft_version}-merged-intermediary.jar")
 def intermediaryJar = new File(cacheFilesMinecraft, "${minecraft_version}-intermediary.jar")
+def mergedV2 = new File(cacheFilesMinecraft, "${yarn_version}-mergedv2.tiny")
 def namedJar = new File(cacheFilesMinecraft, "${minecraft_version}-named.jar")
+def namedUnmergedJar = new File(cacheFilesMinecraft, "${minecraft_version}-named-unmerged.jar")
+def namedUnmergedServerJar = new File(cacheFilesMinecraft, "${minecraft_version}-named-unmerged-server.jar")
 def versionFile = new File(file(manifestPath), "${minecraft_version}.json")
 def versionFile2 = new File(file(manifestPath), "version.json")
 def clientJar = new File(cacheFilesMinecraft, "${minecraft_version}-client.jar")
 def serverJar = new File(cacheFilesMinecraft, "${minecraft_version}-server.jar")
-def conduitServerJar = new File(buildFiles, "${minecraft_patch_name}-server.jar")
-def conduitClientJar = new File(buildFiles, "${minecraft_patch_name}.jar")
+def conduitServerJar = new File(cacheFilesMinecraft, "${minecraft_patch_name}-server.jar")
+def conduitClientJar = new File(cacheFilesMinecraft, "${minecraft_patch_name}.jar")
+def conduitServerInj = new File(cacheFilesMinecraft, "${minecraft_patch_name}-injected-server.jar")
+def conduitClientInj = new File(cacheFilesMinecraft, "${minecraft_patch_name}-injected.jar")
 def conduitBuildJar = new File(file("build/libs"), "conduit-main.jar")
 def conduitObfJar = new File(cacheFilesMinecraft, "${minecraft_patch_name}-obf.jar")
 def conduitIntJar = new File(cacheFilesMinecraft, "${minecraft_patch_name}-intermediary.jar")
+def conduitFullObf = new File(buildFiles, "${minecraft_patch_name}.jar")
+def conduitFullInt = new File(cacheFilesMinecraft, "${minecraft_patch_name}-obf-intermediary.jar")
+def conduitServerObf = new File(buildFiles, "${minecraft_patch_name}-server.jar")
+def conduitServerInt = new File(cacheFilesMinecraft, "${minecraft_patch_name}-obf-intermediary-server.jar")
 def libraries = new File(cacheFilesMinecraft, "libraries")
+def libs = new File("build/libs/")
 
 import com.google.common.hash.Hashing
 import groovy.io.FileType
 import groovy.json.JsonSlurper
 import groovy.json.JsonBuilder
-/*import net.fabricmc.stitch.commands.CommandMergeTiny
-import net.fabricmc.stitch.commands.CommandProposeFieldNames
-import net.fabricmc.stitch.commands.CommandReorderTiny
-import net.fabricmc.stitch.commands.CommandRewriteIntermediary
-import net.fabricmc.stitch.commands.tinyv2.CommandMergeTinyV2
-import net.fabricmc.stitch.commands.tinyv2.CommandProposeV2FieldNames
-import net.fabricmc.stitch.commands.tinyv2.CommandReorderTinyV2*/
 import net.fabricmc.stitch.merge.JarMerger
 import net.fabricmc.tinyremapper.OutputConsumerPath
 import net.fabricmc.tinyremapper.TinyRemapper
 import net.fabricmc.tinyremapper.TinyUtils
 import org.apache.commons.io.FileUtils
 import java.nio.charset.StandardCharsets
+import com.hoodiecoder.recafinjector.InjectorMain
 
 boolean validateChecksum(File file, String checksum) {
 	if (file != null) {
@@ -118,17 +116,50 @@ boolean validateChecksum(File file, String checksum) {
 	return false
 }
 
-task obfuscateConduit() {
+task downloadMergedV2(type: Download) {
+	group = buildMappingGroup
+	def url = "https://maven.fabricmc.net/net/fabricmc/yarn/${yarn_version}/yarn-${yarn_version}-mergedv2.jar"
+	src com.google.common.net.UrlEscapers.urlFragmentEscaper().escape(url)
+	dest new File(cacheFilesMinecraft, "yarn-${yarn_version}-mergedv2.jar")
+}
+
+task extractMergedV2(dependsOn: downloadMergedV2, type: Copy) {
+	def output = mergedV2
+	from({ zipTree(downloadMergedV2.dest) }) {
+		include 'mappings/mappings.tiny'
+		rename 'mappings.tiny', "../${output.name}"
+	}
+	into output.parentFile
+}
+
+task getClientObf() {
 	group = conduitBuildGroup
 	description = 'Builds the obfuscated version of conduit for injection.'
 	dependsOn 'build'
+	dependsOn 'extractMergedV2'
+	dependsOn 'injectConduit'
 	doLast {
-		if (!localMap.exists()) {
+		if (!mergedV2.exists()) {
 			logger.warn("No map detected")
 			return
 		}
-		mapJar(conduitIntJar, conduitBuildJar, localMap, libraries, "named", "intermediary")
-		mapJar(conduitObfJar, conduitIntJar, localMap, libraries, "intermediary", "official")
+		mapJar(conduitFullInt, conduitClientInj, mergedV2, libraries, "named", "intermediary")
+		mapJar(conduitFullObf, conduitFullInt, mergedV2, libraries, "intermediary", "official")
+	}
+}
+task getServerObf() {
+	group = conduitBuildGroup
+	description = 'Builds the obfuscated version of conduit for injection.'
+	dependsOn 'build'
+	dependsOn 'extractMergedV2'
+	dependsOn 'injectConduit'
+	doLast {
+		if (!mergedV2.exists()) {
+			logger.warn("No map detected")
+			return
+		}
+		mapJar(conduitServerInt, conduitServerInj, mergedV2, libraries, "named", "intermediary")
+		mapJar(conduitServerObf, conduitServerInt, mergedV2, libraries, "intermediary", "official")
 	}
 }
 
@@ -298,12 +329,15 @@ void mapJar(File output, File input, File mappings, File libraries, String from,
 }
 
 task addMinecraftDependency() {
-	dependsOn 'mergeJars'
+	dependsOn 'extractMergedV2'
 	dependsOn 'downloadMcLibs'
+	dependsOn 'mergeJars'
 	doLast {
-	mapJar(mergedIntermediary, mergedFile, localMap, libraries, "official", "intermediary")
-	mapJar(namedJar, mergedIntermediary, localMap, libraries, "intermediary", "named")
+	//mapJar(mergedIntermediary, mergedFile, localMap, libraries, "official", "intermediary")
+	mapJar(namedJar, mergedFile, mergedV2, libraries, "official", "named")
 	project.dependencies.add("implementation", files(".gradle/minecraft/${minecraft_version}-named.jar"))
+	mapJar(namedUnmergedServerJar, serverJar, mergedV2, libraries, "official", "named")
+	mapJar(namedUnmergedJar, clientJar, mergedV2, libraries, "official", "named")
 	}
 }
 
@@ -328,6 +362,7 @@ dependsOn 'createVersionJson'
 	def versionJson = slurper.parseText(FileUtils.readFileToString(versionFile2, StandardCharsets.UTF_8))
 	clientJson.remove("downloads")
 	clientJson.put("id", "${minecraft_patch_name}")
+	clientJson.put("mainClass", "conduit.main.Conduit")
 	versionJson.put("id", "${minecraft_patch_name}")
 	versionJson.put("name", "${minecraft_patch_name}")
 	def clientBuilder = new JsonBuilder(clientJson)
@@ -337,28 +372,27 @@ dependsOn 'createVersionJson'
 	}
 }
 
+project.build.dependsOn 'addMinecraftDependency' 
+
 task getConduitClient(type: Jar) {
-	inputs.files(versionFile, versionFile2)
 	outputs.file(conduitClientJar)
 	group = conduitBuildGroup
 	description = 'Builds the conduit server jarfile.'
-	dependsOn 'obfuscateConduit'
+	dependsOn 'updateVersionJson'
 	dependsOn 'build'
-	//dependsOn 'downloadMcLibs'
-	//dependsOn 'downloadMcJars'
-	dependsOn 'addMinecraftDependency'
 	archiveFileName = "${minecraft_patch_name}.jar"
-	destinationDirectory = buildFiles
+	destinationDirectory = cacheFilesMinecraft
 	doLast {
 		if (conduitClientJar.exists()) {
 		logger.warn("Conduit client jar already exists")
 			return
 		}
 	}
-	from(zipTree(clientJar)) {
+	from(zipTree(namedUnmergedJar)) {
 		exclude "**/version.json"
+		exclude "**/META-INF/**"
 	}
-	from(zipTree(conduitObfJar))
+	from(zipTree(conduitBuildJar))
 	include "**/*"
 	exclude "**/META-INF/**"
 	from(file(manifestPath + "/version.json"))
@@ -369,43 +403,68 @@ task getConduitServer(type: Jar) {
 	group = conduitBuildGroup
 	description = 'Builds the conduit server jarfile.'
 	dependsOn 'build'
-	dependsOn 'obfuscateConduit'
-	//dependsOn 'downloadMcLibs'
-	//dependsOn 'downloadMcJars'
-	dependsOn 'addMinecraftDependency'
+	dependsOn 'updateVersionJson'
 	archiveFileName = "${minecraft_patch_name}-server.jar"
-	destinationDirectory = buildFiles
+	destinationDirectory = cacheFilesMinecraft
 	doLast {
 		if (conduitServerJar.exists()) {
 		logger.warn("Conduit server jar already exists")
 			return
 		}
 	}
-	from(zipTree(serverJar)) {
+	from(zipTree(namedUnmergedServerJar)) {
 		exclude "**/version.json"
 	}
-	from(zipTree(conduitObfJar))
+	from(zipTree(conduitBuildJar)) {
+		exclude "**/META-INF/**"
+	}
 	include "**/*"
-	exclude "**/META-INF/**"
 	from(file(manifestPath + "/version.json"))
+	manifest {
+		attributes(
+			'Manifest-Version'	: '1.0',
+			'Main-Class'		: 'net.minecraft.server.Main'
+		)
+	}
 }
 
+task injectConduit() {
+	dependsOn 'getConduitServer'
+	dependsOn 'getConduitClient'
+	doLast {
+	def injectServer = new com.hoodiecoder.recafinjector.InjectorMain(conduitServerJar)
+	def injectClient = new com.hoodiecoder.recafinjector.InjectorMain(conduitClientJar)
+	def common = [injectServer, injectClient] as InjectorMain[]
+	common.each {main ->
+	main.buildBytecode("net/minecraft/resource/ServerResourceManager", "<init>", "(Lnet/minecraft/server/command/CommandManager\$RegistrationEnvironment;I)V").setBytecode(55,
+				"NEW conduit/netmc/command/ConduitCommandManager",
+				"DUP",
+				"ALOAD registrationEnvironment",
+				"INVOKESPECIAL conduit/netmc/command/ConduitCommandManager.<init>(Lnet/minecraft/server/command/CommandManager\$RegistrationEnvironment;)V",
+				"CHECKCAST net/minecraft/server/command/CommandManager"
+				).addBytecode(60, "PUTFIELD net/minecraft/resource/ServerResourceManager.commandManager Lnet/minecraft/server/command/CommandManager;")
+				.assemble()
+	}
+	injectServer.exportToJar(conduitServerInj)
+	injectClient.exportToJar(conduitClientInj)
+	}
+}
 
 task copyServerTemp(type: Copy) {
-	dependsOn 'getConduitServer'
-	from(conduitServerJar)
+	dependsOn 'getServerObf'
+	from(conduitServerObf)
 	into tempDir
 }
 task copyClientTemp(type: Copy) {
-	dependsOn 'getConduitClient'
-	from(conduitClientJar)
+	dependsOn 'getClientObf'
+	from(conduitFullObf)
 	from(manifestPath) {
 		include "${minecraft_patch_name}.json"
 	}
 	into file(".gradle/temp/${minecraft_patch_name}")
 }
 
-task buildConduit(type: Zip) {
+task buildConduitFull(type: Zip) {
 	group = conduitBuildGroup
 	description = 'Builds the full zip file for conduit client and server.'
 	dependsOn 'copyClientTemp'
@@ -419,141 +478,3 @@ task buildConduit(type: Zip) {
 		FileUtils.cleanDirectory(tempDir)
 	}
 }
-
-/*
-task mergeTiny(dependsOn: ["buildYarnTiny", "invertIntermediary"], type: FileOutput) {
-	group = buildMappingGroup
-	def yarnTinyInput = buildYarnTiny.v1Output
-	def intermediaryTinyInput = invertIntermediary.output
-
-	def unorderedResultMappings = new File(tempDir, "mappings-unordered.tiny")
-	output = new File(tempDir, "mappings.tiny")
-	outputs.file(output)
-
-	outputs.upToDateWhen { false }
-
-	doLast {
-		logger.lifecycle(":merging yarn and intermediary")
-		String[] args = [
-				intermediaryTinyInput.getAbsolutePath(),
-				yarnTinyInput.getAbsolutePath(),
-				unorderedResultMappings.getAbsolutePath(),
-				"intermediary",
-				"official"
-		]
-
-		new CommandMergeTiny().run(args)
-
-		logger.lifecycle(":reordering merged intermediary")
-		String[] args2 = [
-				unorderedResultMappings.getAbsolutePath(),
-				output.getAbsolutePath(),
-				"official", "intermediary", "named"
-		]
-
-		new CommandReorderTiny().run(args2)
-	}
-}
-
-task buildYarnTiny(dependsOn: mapIntermediaryJar, type: WithV2FileOutput) {
-	group = buildMappingGroup
-	inputs.dir mappingsDir
-	if (!libs.exists()) {
-		libs.mkdirs()
-	}
-
-	v1Output = new File(tempDir, "yarn-mappings.tiny")
-	v2Output = new File(tempDir, "yarn-mappings-v2.tiny")
-
-	outputs.upToDateWhen { false }
-
-	doLast {
-		logger.lifecycle(":generating tiny mappings")
-
-		new MapSpecializedMethodsCommand().run(
-			intermediaryJar.getAbsolutePath(),
-			"enigma",
-			mappingsDir.getAbsolutePath(),
-			"tinyv2:intermediary:named",
-			v2Output.getAbsolutePath()
-		)
-
-		new ConvertMappingsCommand().run(
-			"tinyv2",
-			v2Output.getAbsolutePath(),
-			"tiny:intermediary:named",
-			v1Output.getAbsolutePath())
-	}
-}
-
-task invertIntermediaryv2(dependsOn: extractIntermediaryV2, type: FileOutput) {
-	group = buildMappingGroup
-	def v2Input = new File(cacheFilesMinecraft, "${minecraft_version}-intermediary-v2.tiny")
-
-	output = new File(cacheFilesMinecraft, "${minecraft_version}-intermediary-inverted-v2.tiny")
-	outputs.file(output)
-
-	outputs.upToDateWhen { false }
-
-	doLast {
-		logger.lifecycle(":building inverted intermediary v2")
-
-		String[] v2Args = [
-				v2Input.getAbsolutePath(),
-				output.getAbsolutePath(),
-				"intermediary", "official"
-		]
-
-		new CommandReorderTinyV2().run(v2Args)
-	}
-}
-
-task extractIntermediaryV2(dependsOn: downloadIntermediaryV2, type: Copy) {
-	def output = new File(cacheFilesMinecraft, "${minecraft_version}-intermediary-v2.tiny")
-	from({ zipTree(downloadIntermediaryV2.dest) }) {
-		include 'mappings/mappings.tiny'
-		rename 'mappings.tiny', "../${output.name}"
-	}
-	into output.parentFile
-}
-
-task downloadIntermediaryV2(type: Download) {
-	group = buildMappingGroup
-	def url = "https://maven.fabricmc.net/net/fabricmc/intermediary/${minecraft_version}/intermediary-${minecraft_version}-v2.jar"
-	src com.google.common.net.UrlEscapers.urlFragmentEscaper().escape(url)
-	dest new File(cacheFilesMinecraft, "${minecraft_version}-intermediary-v2.jar")
-}
-
-task mapIntermediaryJar(dependsOn: [downloadMcLibs, downloadIntermediary, mergeJars]) {
-	group = mapJarGroup
-	inputs.files downloadMcLibs.outputs.files.files
-	outputs.file(intermediaryJar)
-
-	//Force the task to always run
-	outputs.upToDateWhen { false }
-
-	doLast {
-		logger.lifecycle(":mapping minecraft to intermediary")
-		def tinyInput = downloadIntermediary.dest
-		mapJar(intermediaryJar, mergedFile, tinyInput, libraries, "official", "intermediary")
-	}
-}
-
-task downloadIntermediary(type: Download) {
-	group = buildMappingGroup
-	def url = "https://github.com/FabricMC/intermediary/raw/master/mappings/${minecraft_version}.tiny"
-	src com.google.common.net.UrlEscapers.urlFragmentEscaper().escape(url)
-	dest new File(cacheFilesMinecraft, "${minecraft_version}-intermediary.tiny")
-}
-
-class FileOutput extends DefaultTask {
-	@OutputFile
-	File output
-}
-
-class WithV2FileOutput extends DefaultTask {
-	@OutputFile
-	File v1Output
-	@OutputFile
-	File v2Output
-}*/
