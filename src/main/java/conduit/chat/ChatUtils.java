@@ -17,4 +17,10 @@ public class ChatUtils {
 	public static String getChatPrefix(ChatColors before, ChatColors after, String prefix) {
 		return before + prefix + " \u00BB " + after;
 	}
+	public static String error() {
+		return error("An internal error has occurred.");
+	}
+	public static String error(String message) {
+		return getChatPrefix(ChatColors.DARK_RED, ChatColors.RED, "Conduit") + message;
+	}
 }

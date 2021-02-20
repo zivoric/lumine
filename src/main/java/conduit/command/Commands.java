@@ -1,4 +1,4 @@
-package conduit.netmc.command;
+package conduit.command;
 
 import java.util.ArrayList;
 import java.util.List;
