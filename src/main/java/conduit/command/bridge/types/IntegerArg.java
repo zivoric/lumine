@@ -1,7 +1,9 @@
-package conduit.command.bridge;
+package conduit.command.bridge.types;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+
+import conduit.command.bridge.Argument;
 
 public class IntegerArg extends Argument<Integer> {
 	private final IntegerArgumentType arg;

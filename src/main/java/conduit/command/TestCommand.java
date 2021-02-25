@@ -1,23 +1,15 @@
 package conduit.command;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.context.CommandContext;
 
 import conduit.chat.ChatUtils;
 import conduit.command.bridge.Argument;
 import conduit.command.bridge.ArgumentValue;
 import conduit.command.bridge.CommandInformation;
-import conduit.command.bridge.IntegerArg;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.LiteralText;
+import conduit.command.bridge.types.IntegerArg;
+import conduit.util.IDKey;
 
 public class TestCommand extends Command {
 	private static final List<Argument<?>> args = Arrays.asList(IntegerArg.integer("value", 0, 255));
@@ -58,7 +50,7 @@ public class TestCommand extends Command {
 			return 0;
 		case 1:
 			sender.sendMessage(ChatUtils.CHAT_PREFIX + "Test number set to " + ChatUtils.highlightWord(args[0].getValue().toString()));
-			egg = (int) args[0].getValue();
+			egg = (Integer) args[0].getValue();
 			return 0;
 		default:
 			return -1;
@@ -67,5 +59,10 @@ public class TestCommand extends Command {
 	@Override
 	public List<Argument<?>> getArgs() {
 		return Collections.unmodifiableList(args);
+	}
+	
+	@Override
+	public IDKey getIdentifier() {
+		return IDKey.conduit("testcmd");
 	}
 }

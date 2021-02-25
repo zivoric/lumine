@@ -1,8 +1,10 @@
-package conduit.command.bridge;
+package conduit.command.bridge.types;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType.StringType;
+
+import conduit.command.bridge.Argument;
 
 public class StringArg extends Argument<String> {
 	private final String identifier;

@@ -8,6 +8,13 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 
+import conduit.command.bridge.types.BoolArg;
+import conduit.command.bridge.types.DoubleArg;
+import conduit.command.bridge.types.FloatArg;
+import conduit.command.bridge.types.IntegerArg;
+import conduit.command.bridge.types.LongArg;
+import conduit.command.bridge.types.StringArg;
+
 public abstract class Argument<T> {
 	public abstract String getIdentifier();
 	public abstract Class<T> getType();

@@ -7,6 +7,7 @@ import conduit.chat.ChatUtils;
 import conduit.command.bridge.Argument;
 import conduit.command.bridge.CommandInformation;
 import conduit.main.ConduitConstants;
+import conduit.util.IDKey;
 
 public class VersionCommand extends Command {
 	@Override
@@ -35,4 +36,9 @@ public class VersionCommand extends Command {
 			return 0;
 		}));
 	}*/
+
+	@Override
+	public IDKey getIdentifier() {
+		return IDKey.conduit("version");
+	}
 }

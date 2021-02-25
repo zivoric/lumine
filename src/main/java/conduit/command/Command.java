@@ -14,14 +14,17 @@ import conduit.chat.ChatUtils;
 import conduit.command.bridge.Argument;
 import conduit.command.bridge.ArgumentValue;
 import conduit.command.bridge.CommandInformation;
+import conduit.util.IDKey;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 
 public abstract class Command {
+	
 	void register(CommandDispatcher<ServerCommandSource> commandDispatcher) {
 		commandDispatcher.register(buildLiteral());
 	}
 	public abstract String getLiteralName();
+	public abstract IDKey getIdentifier();
 	public abstract int onCommand(CommandInformation info);
 	public abstract List<Argument<?>> getArgs();
 	

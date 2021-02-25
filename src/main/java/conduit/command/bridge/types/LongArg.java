@@ -1,7 +1,9 @@
-package conduit.command.bridge;
+package conduit.command.bridge.types;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.LongArgumentType;
+
+import conduit.command.bridge.Argument;
 
 public class LongArg extends Argument<Long> {
 	private final LongArgumentType arg;

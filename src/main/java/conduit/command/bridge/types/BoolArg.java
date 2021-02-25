@@ -1,7 +1,9 @@
-package conduit.command.bridge;
+package conduit.command.bridge.types;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+
+import conduit.command.bridge.Argument;
 
 public class BoolArg extends Argument<Boolean> {
 	private final BoolArgumentType arg;

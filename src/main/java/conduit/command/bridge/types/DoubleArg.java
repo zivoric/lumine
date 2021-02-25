@@ -1,7 +1,9 @@
-package conduit.command.bridge;
+package conduit.command.bridge.types;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
+
+import conduit.command.bridge.Argument;
 
 public class DoubleArg extends Argument<Double> {
 	private final DoubleArgumentType arg;

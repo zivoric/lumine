@@ -437,10 +437,10 @@ task injectConduit() {
 	def common = [injectServer, injectClient] as InjectorMain[]
 	common.each {main ->
 	main.buildBytecode("net/minecraft/resource/ServerResourceManager", "<init>", "(Lnet/minecraft/server/command/CommandManager\$RegistrationEnvironment;I)V").setBytecode(55,
-				"NEW conduit/netmc/command/ConduitCommandManager",
+				"NEW conduit/command/ConduitCommandManager",
 				"DUP",
 				"ALOAD registrationEnvironment",
-				"INVOKESPECIAL conduit/netmc/command/ConduitCommandManager.<init>(Lnet/minecraft/server/command/CommandManager\$RegistrationEnvironment;)V",
+				"INVOKESPECIAL conduit/command/ConduitCommandManager.<init>(Lnet/minecraft/server/command/CommandManager\$RegistrationEnvironment;)V",
 				"CHECKCAST net/minecraft/server/command/CommandManager"
 				).addBytecode(60, "PUTFIELD net/minecraft/resource/ServerResourceManager.commandManager Lnet/minecraft/server/command/CommandManager;")
 				.assemble()
