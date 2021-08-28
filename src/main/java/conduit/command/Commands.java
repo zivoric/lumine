@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import conduit.bridge.command.Command;
 import conduit.util.CRegistry;
 
 public class Commands {
 	private static final List<Command> BASE_COMMANDS = new ArrayList<Command>();
 	public static final Command TEST_COMMAND = register(new TestCommand());
 	public static final Command VERSION_COMMAND = register(new VersionCommand());
+	public static final Command DEBUG_SEND_COMMAND = register(new DebugSendCommand());
 	private static Command register(Command command) {
 		boolean canPut = true;
 		for (Command c : BASE_COMMANDS) {

@@ -4,11 +4,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import conduit.bridge.command.Argument;
+import conduit.bridge.command.ArgumentValue;
+import conduit.bridge.command.Command;
+import conduit.bridge.command.CommandInformation;
+import conduit.bridge.command.types.IntegerArg;
 import conduit.chat.ChatUtils;
-import conduit.command.bridge.Argument;
-import conduit.command.bridge.ArgumentValue;
-import conduit.command.bridge.CommandInformation;
-import conduit.command.bridge.types.IntegerArg;
 import conduit.util.IDKey;
 
 public class TestCommand extends Command {

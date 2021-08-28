@@ -6,8 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import conduit.command.Command;
-import conduit.main.Conduit;
+import conduit.bridge.command.Command;
 
 public class CRegistry<T> implements Iterable<CEntry<T>> {
 	public final static CRegistry<Command> COMMANDS = new CRegistry<Command>();

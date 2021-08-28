@@ -3,9 +3,10 @@ package conduit.command;
 import java.util.Arrays;
 import java.util.List;
 
+import conduit.bridge.command.Argument;
+import conduit.bridge.command.Command;
+import conduit.bridge.command.CommandInformation;
 import conduit.chat.ChatUtils;
-import conduit.command.bridge.Argument;
-import conduit.command.bridge.CommandInformation;
 import conduit.main.ConduitConstants;
 import conduit.util.IDKey;
 
@@ -19,8 +20,8 @@ public class VersionCommand extends Command {
 	public int onCommand(CommandInformation info) {
 		CommandSender sender = info.getSender();
 		sender.sendMessage(
-				ChatUtils.CHAT_PREFIX + "Running conduit version " + ChatUtils.highlightWord(ConduitConstants.CONDUIT_VERSION)
-				+ " on minecraft version " + ChatUtils.highlightWord(ConduitConstants.MINECRAFT_VERSION) + ".");
+				ChatUtils.CHAT_PREFIX + "Running conduit version " + ChatUtils.highlightWord(ConduitConstants.instance().CONDUIT_VERSION)
+				+ " on minecraft version " + ChatUtils.highlightWord(ConduitConstants.instance().MINECRAFT_VERSION_NAME) + ".");
 			return 0;
 	}
 
