@@ -6,3 +6,20 @@ build
 
 # Ignore local libraries for development
 libs
+
+# User-specific
+.idea
+*.iml
+*.ipr
+*.iws
+
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Eclipse
+/bin/
+.classpath
+.project
+.settings/
