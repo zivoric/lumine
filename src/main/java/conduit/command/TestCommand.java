@@ -1,9 +1,5 @@
 package conduit.command;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import conduit.bridge.command.Argument;
 import conduit.bridge.command.ArgumentValue;
 import conduit.bridge.command.Command;
@@ -11,6 +7,10 @@ import conduit.bridge.command.CommandInformation;
 import conduit.bridge.command.types.IntegerArg;
 import conduit.chat.ChatUtils;
 import conduit.util.IDKey;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class TestCommand extends Command {
 	private static final List<Argument<?>> args = Arrays.asList(IntegerArg.integer("value", 0, 255));

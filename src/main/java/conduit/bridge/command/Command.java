@@ -1,29 +1,27 @@
 package conduit.bridge.command;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-
 import conduit.chat.ChatUtils;
 import conduit.util.IDKey;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public abstract class Command {
 	
-	void register(CommandDispatcher<ServerCommandSource> commandDispatcher) {
+	public final void register(CommandDispatcher<ServerCommandSource> commandDispatcher) {
 		commandDispatcher.register(buildLiteral());
 	}
 	public abstract String getLiteralName();
 	public abstract IDKey getIdentifier();
 	public abstract int onCommand(CommandInformation info);
 	public abstract List<Argument<?>> getArgs();
-	
 	private LiteralArgumentBuilder<ServerCommandSource> buildLiteral() {
 		List<Argument<?>> args = new ArrayList<>(getArgs());
 		LiteralArgumentBuilder<ServerCommandSource> base = LiteralArgumentBuilder.literal(getLiteralName());

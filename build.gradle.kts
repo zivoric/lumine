@@ -1,10 +1,10 @@
-import java.nio.charset.StandardCharsets
-import java.lang.IllegalArgumentException
-
-import org.apache.commons.io.FileUtils
 import com.google.gson.*
-
 import net.fabricmc.tinyremapper.*
+import org.apache.commons.io.FileUtils
+import java.io.BufferedReader
+import java.io.FileInputStream
+import java.io.InputStreamReader
+import java.nio.charset.StandardCharsets
 
 group = "conduit"
 version = project.properties["conduit_patch"]!!
@@ -45,13 +45,9 @@ repositories {
     maven {
         url = uri("https://libraries.minecraft.net/")
     }
-}
-
-dependencies {
-    implementation("net.minecraft:launchwrapper:1.12")
-    implementation("org.ow2.asm:asm:9.1")
-    implementation("org.ow2.asm:asm-tree:9.1")
-    implementation("org.ow2.asm:asm-commons:9.1")
+    maven {
+        url = uri("https://maven.fabricmc.net/")
+    }
 }
 
 val conduitBuild = file("build/conduit")
@@ -59,14 +55,24 @@ val minecraftDir = file(".gradle/minecraft")
 val minecraftLibs = File(minecraftDir, "libraries")
 val clientJar = File(minecraftDir, "$minecraftVersion-client.jar")
 val serverJar = File(minecraftDir, "$minecraftVersion-server.jar")
-val mergedJar = File(minecraftLibs, "$minecraftVersion-merged.jar")
-val intermediaryJar = File(minecraftLibs, "$minecraftVersion-intermediary.jar")
-val namedJar = File(minecraftLibs, "$minecraftVersion-named.jar")
+val mergedJar = File(minecraftDir, "$minecraftVersion-merged.jar")
+var intermediaryJar = File(minecraftDir, "$minecraftVersion-intermediary.jar")
+var namedJar = File(minecraftDir, "$minecraftVersion-named.jar")
 val conduitNamed = file("build/libs/conduit-$version.jar")
 val conduitIntermediary = File(conduitBuild, "intermediary/intermediary-$libraryPatch.jar")
 val conduitObf = File(conduitBuild, "$libraryPatch.jar")
 val mappings = file(".gradle/mappings/yarn-$yarnVersion-mergedv2.tiny")
 val versionManifest = file(".gradle/manifest/$minecraftVersion.json")
+
+dependencies {
+    compileOnly(fileTree(".gradle/minecraft/libraries"))
+    compileOnly(files(namedJar))
+    implementation("net.minecraft:launchwrapper:1.12")
+    implementation("org.ow2.asm:asm:9.1")
+    implementation("org.ow2.asm:asm-tree:9.1")
+    implementation("org.ow2.asm:asm-commons:9.1")
+    implementation("com.google.code.gson:gson:2.8.8")
+}
 
 tasks.register("downloadManifest") {
     val manifestFile = File(minecraftDir, "version_manifest.json")
@@ -78,9 +84,10 @@ tasks.register("downloadManifest") {
 
 fun getManifestVersion(manifest : File, version : String) : JsonObject {
     val jsonObj = JsonParser.parseString(FileUtils.readFileToString(manifest, StandardCharsets.UTF_8)).asJsonObject
-    return jsonObj.get("versions").asJsonArray.toSet().stream().filter {
+    val manifestVersion = jsonObj.get("versions").asJsonArray.firstOrNull {
         it.asJsonObject.get("id").asString.equals(version)
-    }.findFirst().orElseThrow { IllegalArgumentException("Invalid version name $version provided.") }.asJsonObject
+    } ?: throw IllegalArgumentException("Version name $version is invalid.")
+    return manifestVersion.asJsonObject
 }
 
 tasks.register("downloadVersionManifest") {
@@ -126,7 +133,7 @@ tasks.register("downloadLibraries") {
             val url = it.asJsonObject.getAsJsonObject("downloads").getAsJsonObject("artifact").get("url").asString
             val fileName = url.substring(url.lastIndexOf("/") + 1)
             download(url, File(minecraftLibs, fileName))
-            project.dependencies.add("implementation", files(File(minecraftLibs, fileName)))
+            //project.dependencies.add("implementation", files(File(minecraftLibs, fileName)))
         }
     }
 }
@@ -150,31 +157,35 @@ tasks.register<Copy>("extractMappings") {
     into(outputDir)
 }
 
-tasks.register("addMinecraftDependency") {
+tasks.register("setupEnvironment") {
     dependsOn("downloadLibraries", "mergeJars", "extractMappings")
     doLast {
         mapJar(intermediaryJar, mergedJar, mappings, minecraftLibs, "official", "intermediary")
         mapJar(namedJar, intermediaryJar, mappings, minecraftLibs, "intermediary", "named")
-        project.dependencies.add("implementation", files(namedJar))
+        //project.dependencies.add("implementation", files(namedJar))
     }
 }
 
 tasks.compileJava {
-    dependsOn("addMinecraftDependency")
+    dependsOn("setupEnvironment")
 }
 
 tasks.register("conduitIntermediary") {
     dependsOn("build")
     doLast {
+        namedJar = move(namedJar, minecraftLibs)
         mapJar(conduitIntermediary, conduitNamed, mappings, minecraftLibs, "named", "intermediary")
+        namedJar = move(namedJar, minecraftDir)
     }
 }
 
 tasks.register("conduit") {
     dependsOn("conduitIntermediary")
     doLast {
+        intermediaryJar = move(intermediaryJar, minecraftLibs)
         mapJar(conduitObf, conduitIntermediary, mappings, minecraftLibs, "intermediary", "official")
         println("Conduit jar successfully saved to ${conduitObf.absolutePath}")
+        intermediaryJar = move(intermediaryJar, minecraftDir)
     }
 }
 
@@ -183,7 +194,8 @@ fun mapJar(output : File, input : File, mappings : File, libraries : File, from 
         output.delete()
     }
     val remapper = TinyRemapper.newRemapper()
-        .withMappings(TinyUtils.createTinyMappingProvider(mappings.toPath(), from, to))
+        //.withMappings(TinyUtils.createTinyMappingProvider(mappings.toPath(), from, to))
+        .withMappings(createMappingProvider(mappings, from, to))
         .renameInvalidLocals(true)
         .rebuildSourceFilenames(true)
         .build()
@@ -205,8 +217,38 @@ fun mapJar(output : File, input : File, mappings : File, libraries : File, from 
     }
 }
 
+fun createMappingProvider(mappings : File, from : String, to : String): IMappingProvider {
+    val reader = BufferedReader(InputStreamReader(FileInputStream(mappings)))
+    val mappings = net.fabricmc.mapping.tree.TinyMappingFactory.loadWithDetection(reader)
+    return IMappingProvider {
+        acceptor ->
+        for (def : net.fabricmc.mapping.tree.ClassDef in mappings.classes) {
+            val className = def.getName(from)
+            acceptor.acceptClass(className, def.getName(to));
+            for (field in def.fields) {
+                acceptor.acceptField(getMember(className, field.getName(from), field.getDescriptor(from)), field.getName(to))
+            }
+            for (method in def.methods) {
+                val methodIdentifier = getMember(className, method.getName(from), method.getDescriptor(from))
+                acceptor.acceptMethod(methodIdentifier, method.getName(to))
+            }
+        }
+    }
+}
+
+fun getMember(className : String, memberName : String, descriptor : String) : IMappingProvider.Member {
+    return IMappingProvider.Member(className, memberName, descriptor);
+}
+
 fun download(url : String, dest : File) {
     if (!dest.parentFile.exists())
         dest.parentFile.mkdirs()
     ant.invokeMethod("get", mapOf("src" to url, "dest" to dest))
+}
+
+fun move(src : File, dest : File) : File {
+    if (!dest.parentFile.exists())
+        dest.parentFile.mkdirs()
+    ant.invokeMethod("move", mapOf("file" to src, "todir" to dest));
+    return File(dest, src.name);
 }

@@ -1,28 +1,18 @@
 package conduit.command;
 
-import java.util.Arrays;
-import java.util.List;
-
 import conduit.bridge.command.Argument;
 import conduit.bridge.command.ArgumentValue;
 import conduit.bridge.command.Command;
 import conduit.bridge.command.CommandInformation;
 import conduit.bridge.command.types.StringArg;
 import conduit.bridge.command.types.StringArg.StrType;
-import conduit.bridge.entity.BridgePlayer;
-import conduit.bridge.server.BridgeServer;
 import conduit.chat.ChatColors;
 import conduit.chat.ChatUtils;
 import conduit.entity.Player;
-import conduit.main.Conduit;
-import conduit.server.Server;
-import conduit.util.ConduitUtils;
 import conduit.util.IDKey;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.PlayerManager;
-import net.minecraft.server.dedicated.MinecraftDedicatedServer;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class DebugSendCommand extends Command {
 	private static final List<Argument<?>> args = Arrays.asList(StringArg.stringArg("type", StrType.SINGLE), StringArg.stringArg("player", StrType.SINGLE), StringArg.stringArg("message", StrType.GREEDY));
@@ -50,7 +40,7 @@ public class DebugSendCommand extends Command {
 			String msgType = (String)args[0].getValue();
 			String player = (String)args[1].getValue();
 			String message = (String)args[2].getValue();
-			Player targetPlayer = (Player) sender;
+			Player targetPlayer = sender.getServer().getPlayer(player);//(Player) sender;
 			if (targetPlayer == null) {
 				sender.sendError(ChatUtils.error("This player does not exist."));
 				return -1;

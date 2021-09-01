@@ -1,28 +1,35 @@
 package conduit.main;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import conduit.util.GameEnvironment;
 import net.minecraft.SharedConstants;
 import net.minecraft.launchwrapper.ITweaker;
 import net.minecraft.launchwrapper.LaunchClassLoader;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Conduit implements ITweaker {
 	public static final Logger LOGGER = LogManager.getLogger();
 	
 	private final List<String> args = new ArrayList<>();
 	
-	private final String MINECRAFT_VERSION_NAME = SharedConstants.VERSION_NAME;
-	
+	private final String MINECRAFT_VERSION_NAME = SharedConstants.VERSION_NAME; // getGameVersion().getName() causes error
+
 	@Override
 	public void acceptOptions(List<String> args, File game, File assets, String version) {
 		this.args.addAll(args);
 		this.args.add("--version");
 		this.args.add(version);
-		log("Tweaker class loaded! Running minecraft version " + MINECRAFT_VERSION_NAME);
+		if (args.contains("--versionType")) {
+			this.args.set(args.indexOf("--versionType")+1, "conduit");
+		} else {
+			this.args.add("--versionType");
+			this.args.add("conduit");
+		}
+		log("Tweaker class loaded! Running minecraft " + getEnvironment().toString().toLowerCase() + " version " + MINECRAFT_VERSION_NAME);
 	}
 
 	@Override
@@ -37,12 +44,25 @@ public class Conduit implements ITweaker {
 
 	@Override
 	public void injectIntoClassLoader(LaunchClassLoader classLoader) {
-		/*MixinBootstrap.init();
-		MixinEnvironment.getDefaultEnvironment().setSide(Side.CLIENT);
-		MixinEnvironment.getDefaultEnvironment().setObfuscationContext("notch");
-		Mixins.addConfiguration("conduit-mixins.json");*/
+		log("injecting into class loader");
 		classLoader.registerTransformer(ConduitTransformer.class.getName());
 	}
+
+	public static GameEnvironment getEnvironment() {
+		GameEnvironment env;
+		try {
+			Class.forName("net.minecraft.client.main.Main");
+			env = GameEnvironment.CLIENT;
+		} catch (ClassNotFoundException e) {
+			env = GameEnvironment.SERVER;
+		}
+		return env;
+	}
+
+	public static boolean isClient() {
+		return getEnvironment() == GameEnvironment.CLIENT;
+	}
+
 	public static void log(String text) {
 		LOGGER.info("[Conduit] " + text);
 	}
@@ -57,6 +77,14 @@ public class Conduit implements ITweaker {
 	public static void warn(String... text) {
 		for (String t : text) {
 			warn(t);
+		}
+	}
+	public static void error(String text) {
+		LOGGER.error("[Conduit] " + text);
+	}
+	public static void error(String... text) {
+		for (String t : text) {
+			error(t);
 		}
 	}
 }

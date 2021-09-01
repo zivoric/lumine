@@ -1,14 +1,15 @@
 package conduit.bridge.command;
 
+import conduit.bridge.server.BridgeServer;
 import conduit.chat.ChatColors;
 import conduit.command.ConsoleSender;
+import conduit.server.Server;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 
 public class BridgeConsoleSender implements ConsoleSender {
-	private final CommandOutput output;
+	private final MinecraftServer output;
 	private final ServerCommandSource source;
 	public BridgeConsoleSender(MinecraftServer server) {
 		source = server.getCommandSource();
@@ -24,4 +25,8 @@ public class BridgeConsoleSender implements ConsoleSender {
 		source.sendError(new LiteralText(ChatColors.removeColorCodes(message)));
 	}
 
+	@Override
+	public Server getServer() {
+		return new BridgeServer(output);
+	}
 }

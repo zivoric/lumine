@@ -1,9 +1,9 @@
 package conduit.server;
 
+import conduit.entity.Player;
+
 import java.util.List;
 import java.util.UUID;
-
-import conduit.entity.Player;
 
 public interface PlayerHandler {
 	Server getServer();

@@ -1,5 +1,7 @@
 package conduit.entity;
 
-public interface Entity {
+import conduit.server.Server;
 
+public interface Entity {
+    Server getServer();
 }

@@ -1,15 +1,16 @@
 package conduit.bridge.server;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
 import conduit.bridge.entity.BridgePlayer;
 import conduit.entity.Player;
 import conduit.server.PlayerHandler;
 import conduit.server.Server;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.PlayerManager;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 public class BridgePlayerHandler implements PlayerHandler {
 	private final PlayerManager manager;
@@ -28,7 +29,7 @@ public class BridgePlayerHandler implements PlayerHandler {
 		manager.getPlayerList().forEach(player -> {
 			players.add(new BridgePlayer(player));
 		});
-		return players;
+		return Collections.unmodifiableList(players);
 	}
 
 	@Override

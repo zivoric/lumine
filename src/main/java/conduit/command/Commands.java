@@ -1,11 +1,11 @@
 package conduit.command;
 
+import conduit.bridge.command.Command;
+import conduit.util.CRegistry;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import conduit.bridge.command.Command;
-import conduit.util.CRegistry;
 
 public class Commands {
 	private static final List<Command> BASE_COMMANDS = new ArrayList<Command>();

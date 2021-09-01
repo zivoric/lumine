@@ -23,3 +23,6 @@ libs
 .classpath
 .project
 .settings/
+
+# Conduit
+old_injection

@@ -1,14 +1,14 @@
 package conduit.command;
 
-import java.util.Arrays;
-import java.util.List;
-
 import conduit.bridge.command.Argument;
 import conduit.bridge.command.Command;
 import conduit.bridge.command.CommandInformation;
 import conduit.chat.ChatUtils;
 import conduit.main.ConduitConstants;
 import conduit.util.IDKey;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class VersionCommand extends Command {
 	@Override

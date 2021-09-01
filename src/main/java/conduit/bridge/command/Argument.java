@@ -1,19 +1,7 @@
 package conduit.bridge.command;
 
-import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.arguments.BoolArgumentType;
-import com.mojang.brigadier.arguments.DoubleArgumentType;
-import com.mojang.brigadier.arguments.FloatArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.LongArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
-
-import conduit.bridge.command.types.BoolArg;
-import conduit.bridge.command.types.DoubleArg;
-import conduit.bridge.command.types.FloatArg;
-import conduit.bridge.command.types.IntegerArg;
-import conduit.bridge.command.types.LongArg;
-import conduit.bridge.command.types.StringArg;
+import com.mojang.brigadier.arguments.*;
+import conduit.bridge.command.types.*;
 
 public abstract class Argument<T> {
 	public abstract String getIdentifier();

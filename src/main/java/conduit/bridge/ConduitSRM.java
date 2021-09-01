@@ -1,7 +1,5 @@
 package conduit.bridge;
 
-import java.lang.reflect.Field;
-
 import conduit.bridge.command.ConduitCommandManager;
 import conduit.main.Conduit;
 import conduit.util.ConduitUtils;
@@ -9,6 +7,8 @@ import conduit.util.ObfuscationMap;
 import net.minecraft.resource.ServerResourceManager;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.util.registry.DynamicRegistryManager;
+
+import java.lang.reflect.Field;
 
 public class ConduitSRM extends ServerResourceManager {
     private ObfuscationMap map;

@@ -1,12 +1,9 @@
 package conduit.util;
 
-import java.io.InputStream;
-
-import conduit.bridge.server.BridgeServer;
 import conduit.main.Conduit;
 import conduit.main.ConduitConstants;
-import conduit.server.Server;
-import net.minecraft.client.MinecraftClient;
+
+import java.io.InputStream;
 
 public class ConduitUtils {
 	private static ObfuscationMap currentMap = null;

@@ -1,7 +1,10 @@
 package conduit.command;
 
 
+import conduit.server.Server;
+
 public interface CommandSender {
-public void sendMessage(String message);
-public void sendError(String message);
+    void sendMessage(String message);
+    void sendError(String message);
+    Server getServer();
 }
