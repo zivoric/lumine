@@ -1,7 +1,8 @@
 package conduit.entity;
 
+import conduit.command.CommandSender;
 import conduit.server.Server;
 
-public interface Entity {
-    Server getServer();
+public abstract class Entity implements CommandSender {
+    public abstract Server getServer();
 }

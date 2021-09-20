@@ -1,11 +1,11 @@
 package conduit.command;
 
-import conduit.bridge.command.Argument;
-import conduit.bridge.command.ArgumentValue;
-import conduit.bridge.command.Command;
-import conduit.bridge.command.CommandInformation;
-import conduit.bridge.command.types.StringArg;
-import conduit.bridge.command.types.StringArg.StrType;
+import conduit.command.argument.Argument;
+import conduit.command.argument.ArgumentValue;
+import conduit.command.argument.CommandInformation;
+import conduit.command.argument.types.EntityArg;
+import conduit.command.argument.types.StringArg;
+import conduit.command.argument.types.StringArg.StrType;
 import conduit.chat.ChatColors;
 import conduit.chat.ChatUtils;
 import conduit.entity.Player;
@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class DebugSendCommand extends Command {
-	private static final List<Argument<?>> args = Arrays.asList(StringArg.stringArg("type", StrType.SINGLE), StringArg.stringArg("player", StrType.SINGLE), StringArg.stringArg("message", StrType.GREEDY));
+	private static final List<Argument<?>> args = Arrays.asList(StringArg.stringArg("type", StrType.SINGLE), EntityArg.player("player")/*StringArg.stringArg("player", StrType.SINGLE)*/, StringArg.stringArg("message", StrType.GREEDY));
 	
 	@Override
 	public String getLiteralName() {
@@ -38,9 +38,9 @@ public class DebugSendCommand extends Command {
 			break;
 		default:
 			String msgType = (String)args[0].getValue();
-			String player = (String)args[1].getValue();
+			//String player = (String)args[1].getValue();
 			String message = (String)args[2].getValue();
-			Player targetPlayer = sender.getServer().getPlayer(player);//(Player) sender;
+			Player targetPlayer = (Player)((List<?>)args[1].getValue()).get(0);//sender.getServer().getPlayer(player);
 			if (targetPlayer == null) {
 				sender.sendError(ChatUtils.error("This player does not exist."));
 				return -1;

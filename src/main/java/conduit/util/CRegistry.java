@@ -1,69 +1,47 @@
 package conduit.util;
 
-import conduit.bridge.command.Command;
+import conduit.command.Command;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
-public class CRegistry<T> implements Iterable<CEntry<T>> {
-	public final static CRegistry<Command> COMMANDS = new CRegistry<Command>();
+public class CRegistry<T> implements Iterable<Entry<IDKey, T>> {
+	public final static CRegistry<Command> COMMANDS = new CRegistry<>();
 	
-	private final List<CEntry<T>> registry;
+	private final Map<IDKey, T> registry;
 	
 	private CRegistry() {
-		registry = new ArrayList<CEntry<T>>();
+		this(new HashMap<>());
 	}
 	
 	private CRegistry(Map<IDKey, T> registry) {
-		List<CEntry<T>> entries = new ArrayList<CEntry<T>>();
-		registry.entrySet().forEach(entry -> entries.add(new CEntry<T>(entry.getKey(), entry.getValue())));
-		this.registry = entries;
+		this.registry = registry;
 	}
 	
 	public boolean isRegistered(IDKey key) {
-		for (CEntry<T> entry : registry) {
-			if (entry.getKey().equals(key)) {
-				return true;
-			}
-		}
-		return false;
+		return registry.containsKey(key);
 	}
 	
 	public boolean isRegistered(T value) {
-		for (CEntry<T> entry : registry) {
-			if (entry.getValue().equals(value)) {
-				return true;
-			}
-		}
-		return false;
+		return registry.containsValue(value);
 	}
 	
 	public boolean isTypeRegistered(Class<?> cl) {
-		for (CEntry<T> entry : registry) {
-			if (cl.isInstance(entry.getValue()))
+		for (T value : registry.values()) {
+			if (cl.isInstance(value))
 				return true;
 		}
 		return false;
 	}
 	
 	public T get(IDKey key) {
-		for (CEntry<T> entry : registry) {
-			if (entry.getKey().equals(key)) {
-				return entry.getValue();
-			}
-		}
-		return null;
+		return registry.get(key);
 	}
 	
 	public boolean add(IDKey key, T value) {
-		if (isRegistered(key)) 
-			remove(key);
-		if (get(key) != null && get(key).equals(value))
+		if (isRegistered(key))
 			return false;
-		registry.add(new CEntry<T>(key, value));
+		registry.put(key, value);
 		return true;
 	}
 	
@@ -77,7 +55,7 @@ public class CRegistry<T> implements Iterable<CEntry<T>> {
 		return changed;
 	}
 	
-	public boolean remove(IDKey key) {
+	/*public boolean remove(IDKey key) {
 		for (CEntry<T> entry : registry) {
 			if (entry.getKey().equals(key)) {
 				registry.remove(entry);
@@ -95,14 +73,14 @@ public class CRegistry<T> implements Iterable<CEntry<T>> {
 			}
 		}
 		return false;
-	}
+	}*/
 	
 	public void clear() {
 		registry.clear();
 	}
 
 	@Override
-	public Iterator<CEntry<T>> iterator() {
-		return registry.iterator();
+	public Iterator<Entry<IDKey, T>> iterator() {
+		return registry.entrySet().iterator();
 	}
 }

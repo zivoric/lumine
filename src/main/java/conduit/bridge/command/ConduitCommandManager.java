@@ -1,5 +1,6 @@
 package conduit.bridge.command;
 
+import conduit.command.Command;
 import conduit.command.Commands;
 import conduit.main.Conduit;
 import conduit.util.CRegistry;
@@ -17,12 +18,12 @@ public class ConduitCommandManager extends CommandManager {
 	}
 	public void updateRegistry() {
 		CRegistry.COMMANDS.forEach(entry -> {
-			entry.getValue().register(getDispatcher());
+			new CommandBuilder(entry.getValue()).register(getDispatcher());
 		});
 	}
 	public void updateRegistry(Command command) {
 		CRegistry.COMMANDS.add(command.getIdentifier(), command);
-		command.register(getDispatcher());
+		new CommandBuilder(command).register(getDispatcher());
 		Conduit.log("added conduit command with literal /" + command.getLiteralName());
 	}
 	@Override

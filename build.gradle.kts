@@ -6,9 +6,6 @@ import java.io.FileInputStream
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 
-group = "conduit"
-version = project.properties["conduit_patch"]!!
-
 buildscript {
     repositories {
         mavenCentral()
@@ -34,11 +31,16 @@ java {
     }
 }
 
+val conduitVersion = project.properties["conduit_patch"]!!
 val minecraftVersion = "1.17.1"
+
+group = project.properties["group"]!!
+version = "${minecraftVersion}_${conduitVersion}"
+
 val yarnVersion = "$minecraftVersion+build.${project.properties["yarn_build"]}"
-val patchName = "$minecraftVersion-conduit_$version"
-val patchTitle = "$minecraftVersion-Conduit_$version"
-val libraryPatch = "conduit-main-${minecraftVersion}_$version"
+val patchName = "$minecraftVersion-conduit_$conduitVersion"
+val patchTitle = "$minecraftVersion-Conduit_$conduitVersion"
+val libraryPatch = "conduit-main-$version"
 
 repositories {
     mavenCentral()
@@ -159,6 +161,7 @@ tasks.register<Copy>("extractMappings") {
 
 tasks.register("setupEnvironment") {
     dependsOn("downloadLibraries", "mergeJars", "extractMappings")
+    outputs.upToDateWhen {intermediaryJar.exists() && namedJar.exists()}
     doLast {
         mapJar(intermediaryJar, mergedJar, mappings, minecraftLibs, "official", "intermediary")
         mapJar(namedJar, intermediaryJar, mappings, minecraftLibs, "intermediary", "named")

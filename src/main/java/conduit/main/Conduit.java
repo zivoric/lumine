@@ -1,7 +1,6 @@
 package conduit.main;
 
 import conduit.util.GameEnvironment;
-import net.minecraft.SharedConstants;
 import net.minecraft.launchwrapper.ITweaker;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 import org.apache.logging.log4j.LogManager;
@@ -15,8 +14,6 @@ public class Conduit implements ITweaker {
 	public static final Logger LOGGER = LogManager.getLogger();
 	
 	private final List<String> args = new ArrayList<>();
-	
-	private final String MINECRAFT_VERSION_NAME = SharedConstants.VERSION_NAME; // getGameVersion().getName() causes error
 
 	@Override
 	public void acceptOptions(List<String> args, File game, File assets, String version) {
@@ -29,7 +26,8 @@ public class Conduit implements ITweaker {
 			this.args.add("--versionType");
 			this.args.add("conduit");
 		}
-		log("Tweaker class loaded! Running minecraft " + getEnvironment().toString().toLowerCase() + " version " + MINECRAFT_VERSION_NAME);
+		new ConduitConstants(version.substring(0, version.indexOf("-conduit")));
+		log("Tweaker class loaded! Running minecraft " + getEnvironment().toString().toLowerCase() + " version " + ConduitConstants.instance().MINECRAFT_VERSION_NAME);
 	}
 
 	@Override

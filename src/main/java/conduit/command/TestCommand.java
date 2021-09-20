@@ -1,10 +1,9 @@
 package conduit.command;
 
-import conduit.bridge.command.Argument;
-import conduit.bridge.command.ArgumentValue;
-import conduit.bridge.command.Command;
-import conduit.bridge.command.CommandInformation;
-import conduit.bridge.command.types.IntegerArg;
+import conduit.command.argument.Argument;
+import conduit.command.argument.ArgumentValue;
+import conduit.command.argument.CommandInformation;
+import conduit.command.argument.types.IntegerArg;
 import conduit.chat.ChatUtils;
 import conduit.util.IDKey;
 

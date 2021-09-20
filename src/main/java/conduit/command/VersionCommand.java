@@ -1,8 +1,7 @@
 package conduit.command;
 
-import conduit.bridge.command.Argument;
-import conduit.bridge.command.Command;
-import conduit.bridge.command.CommandInformation;
+import conduit.command.argument.Argument;
+import conduit.command.argument.CommandInformation;
 import conduit.chat.ChatUtils;
 import conduit.main.ConduitConstants;
 import conduit.util.IDKey;

@@ -10,4 +10,9 @@ public interface PlayerHandler {
 	List<Player> getPlayers();
 	Player getPlayer(UUID uuid);
 	Player getPlayer(String name);
+	int getCurrentPlayers();
+	int getMaxPlayers();
+	List<PlayerProfile> getOperators();
+	List<Player> getOnlineOperators();
+	boolean isOperator(Player player);
 }

@@ -1,6 +1,5 @@
 package conduit.command;
 
-import conduit.bridge.command.Command;
 import conduit.util.CRegistry;
 
 import java.util.ArrayList;

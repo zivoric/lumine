@@ -1,6 +1,7 @@
 package conduit.injects;
 
-import conduit.bridge.command.Command;
+import conduit.bridge.command.CommandBuilder;
+import conduit.command.Command;
 import conduit.command.Commands;
 import conduit.injection.ClassInjector;
 import conduit.injection.FunctionInjector;
@@ -19,21 +20,19 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public final class CoreInjectors {
+public final class CoreInjects {
     private final List<ClassInjector<?>> INJECTORS = new LinkedList<>();
-    public CoreInjectors() {
+    public CoreInjects() {
         INJECTORS.add(new ClassInjector<>(
                 new VoidInjector<CommandManager>(CommandManager::new) {
-                    @InvokeInjection(InjectProperties.Point.START)
+                    @InvokeInjection(InjectProperties.Point.RETURN)
                     static void init(CommandManager instance, CommandManager.RegistrationEnvironment commandEnvironment) {
-                        Commands.get().forEach(cmd -> {
-                            updateRegistry(instance, cmd);
-                        });
+                        Commands.get().forEach(cmd -> updateRegistry(instance, cmd));
                     }
 
                     private static void updateRegistry(CommandManager instance, Command command) {
                         CRegistry.COMMANDS.add(command.getIdentifier(), command);
-                        command.register(instance.getDispatcher());
+                        new CommandBuilder(command).register(instance.getDispatcher());
                         Conduit.log("added conduit command with literal /" + command.getLiteralName());
                     }
                 }
@@ -47,8 +46,8 @@ public final class CoreInjectors {
                     }
                 }
         ));
-        if (Conduit.isClient()) {
-            INJECTORS.add(new ClassInjector(
+        /*if (Conduit.isClient()) {
+            INJECTORS.add(new ClassInjector<>(
                     new FunctionInjector<ClientBrandRetriever>(ClientBrandRetriever::getClientModName) {
                         @ReplaceInjection
                         @CacheValue
@@ -57,7 +56,7 @@ public final class CoreInjectors {
                         }
                     }
             ));
-        }
+        }*/
     }
     public List<ClassInjector<?>> getInjectors() {
         return Collections.unmodifiableList(INJECTORS);
