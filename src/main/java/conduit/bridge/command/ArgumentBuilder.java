@@ -3,8 +3,8 @@ package conduit.bridge.command;
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.context.CommandContext;
 import conduit.bridge.command.builders.*;
-import conduit.command.argument.types.*;
 import conduit.command.argument.Argument;
+import conduit.command.argument.types.*;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
 

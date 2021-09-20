@@ -2,7 +2,9 @@ package conduit.util;
 
 import conduit.command.Command;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 
 public class CRegistry<T> implements Iterable<Entry<IDKey, T>> {

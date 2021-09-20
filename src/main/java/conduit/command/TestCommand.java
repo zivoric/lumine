@@ -1,10 +1,10 @@
 package conduit.command;
 
+import conduit.chat.ChatUtils;
 import conduit.command.argument.Argument;
 import conduit.command.argument.ArgumentValue;
 import conduit.command.argument.CommandInformation;
 import conduit.command.argument.types.IntegerArg;
-import conduit.chat.ChatUtils;
 import conduit.util.IDKey;
 
 import java.util.Arrays;
