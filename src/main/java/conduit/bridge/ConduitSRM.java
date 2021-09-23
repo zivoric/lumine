@@ -1,7 +1,7 @@
 package conduit.bridge;
 
 import conduit.bridge.command.ConduitCommandManager;
-import conduit.main.Conduit;
+import conduit.Conduit;
 import conduit.util.ConduitUtils;
 import conduit.util.ObfuscationMap;
 import net.minecraft.resource.ServerResourceManager;

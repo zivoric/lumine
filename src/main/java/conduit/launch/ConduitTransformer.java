@@ -1,5 +1,6 @@
-package conduit.main;
+package conduit.launch;
 
+import conduit.Conduit;
 import conduit.client.ClientInjects;
 import conduit.injection.ClassInjector;
 import conduit.injects.CoreInjects;

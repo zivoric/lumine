@@ -2,7 +2,7 @@ package conduit.bridge.command;
 
 import conduit.command.Command;
 import conduit.command.Commands;
-import conduit.main.Conduit;
+import conduit.Conduit;
 import conduit.util.CRegistry;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;

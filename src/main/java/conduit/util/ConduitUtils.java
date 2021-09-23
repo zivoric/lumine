@@ -1,7 +1,7 @@
 package conduit.util;
 
-import conduit.main.Conduit;
-import conduit.main.ConduitConstants;
+import conduit.Conduit;
+import conduit.ConduitConstants;
 
 import java.io.InputStream;
 

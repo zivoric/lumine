@@ -10,7 +10,7 @@ import conduit.injection.annotations.CacheValue;
 import conduit.injection.annotations.InvokeInjection;
 import conduit.injection.annotations.ReplaceInjection;
 import conduit.injection.util.InjectProperties;
-import conduit.main.Conduit;
+import conduit.Conduit;
 import conduit.util.CRegistry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;

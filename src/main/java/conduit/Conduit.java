@@ -1,20 +1,21 @@
-package conduit.main;
+package conduit;
 
 import conduit.util.GameEnvironment;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class Conduit {
+    private static GameEnvironment environment = null;
     public static final Logger LOGGER = LogManager.getLogger();
+
+    public static void setEnvironment(GameEnvironment env) throws IllegalAccessException {
+        if (environment == null)
+            environment = env;
+        else
+            throw new IllegalAccessException("Game environment is already set");
+    }
     public static GameEnvironment getEnvironment() {
-        GameEnvironment env;
-        try {
-            Class.forName("net.minecraft.client.main.Main");
-            env = GameEnvironment.CLIENT;
-        } catch (ClassNotFoundException e) {
-            env = GameEnvironment.SERVER;
-        }
-        return env;
+        return environment;
     }
 
     public static boolean isClient() {
