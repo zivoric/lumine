@@ -1,4 +1,6 @@
 package conduit.modification;
 
-public class ConduitMod {
+public abstract class ConduitMod {
+    public abstract void initialize();
+    public abstract void terminate();
 }
