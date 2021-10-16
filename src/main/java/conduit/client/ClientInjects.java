@@ -13,6 +13,7 @@ import java.util.List;
 public class ClientInjects {
     private final List<ClassInjector<?>> INJECTORS = new LinkedList<>();
     public ClientInjects() {
+        // Mod name injection
         INJECTORS.add(new ClassInjector<>(
                 new FunctionInjector<ClientBrandRetriever>(ClientBrandRetriever::getClientModName) {
                     @ReplaceInjection

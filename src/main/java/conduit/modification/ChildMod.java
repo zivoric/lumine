@@ -12,4 +12,6 @@ public abstract class ChildMod {
     public ConduitMod getParent() {
         return parent;
     }
+    public abstract void initialize();
+    public abstract void terminate();
 }
