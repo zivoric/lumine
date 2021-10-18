@@ -2,7 +2,7 @@ package conduit.modification;
 
 public abstract class ChildMod {
     private ConduitMod parent = null;
-    public void setParent(ConduitMod parent) {
+    public void setParent(ConduitMod parent) throws UnsupportedOperationException, IllegalArgumentException {
         if (this.parent == null && parent != null)  {
             this.parent = parent;
         } else {
@@ -12,6 +12,6 @@ public abstract class ChildMod {
     public ConduitMod getParent() {
         return parent;
     }
-    public abstract void initialize();
-    public abstract void terminate();
+    public abstract void start();
+    public abstract void stop();
 }

@@ -1,40 +1,114 @@
 package conduit.modification;
 
-import conduit.Conduit;
 import conduit.modification.config.ModConfiguration;
+import conduit.modification.exception.ModLoadException;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ModWrapper {
-    private final ConduitMod modInstance;
+    private String id;
+    private boolean modPrepared, clientPrepared, serverPrepared = false;
+    private boolean hasClientMod, hasServerMod = false;
+    private final ModConfiguration config;
+    private ConduitMod modInstance;
+    private ClientMod clientInstance = null;
+    private ServerMod serverInstance = null;
     private final Class<? extends ConduitMod> mainClass;
-    private final Class<? extends ClientMod> clientClass;
-    private final Class<? extends ServerMod> serverClass;
+    private Class<? extends ClientMod> clientClass;
+    private Class<? extends ServerMod> serverClass;
+    private final Constructor<? extends ConduitMod> mainConstr;
+    private Constructor<? extends ClientMod> clientConstr;
+    private Constructor<? extends ServerMod> serverConstr;
     public ModWrapper(Class<? extends ConduitMod> modClass, ModConfiguration config) throws ModLoadException {
         mainClass = modClass;
+        this.config = config;
+        id = ConduitMod.getValidId(config);
         try {
-            Method getClient = ConduitMod.class.getMethod("getClientMod");
-            Method getServer = ConduitMod.class.getMethod("getServerMod");
-            Constructor<? extends ConduitMod> constr;
             try {
-                constr = modClass.getDeclaredConstructor();
+                mainConstr = modClass.getDeclaredConstructor();
             } catch (NoSuchMethodException e) {
                 throw new ModLoadException("Main mod class " + modClass.getName() + " does not contain a no-argument constructor");
             }
-            constr.setAccessible(true);
-            modInstance = constr.newInstance();
-            clientClass = modInstance.getClientMod();
-            serverClass = modInstance.getServerMod();
-        } catch (ModLoadException e) {
-            throw e;
+            mainConstr.setAccessible(true);
         } catch (Exception e) {
-            throw new ModLoadException(e.getMessage());
+            throw ModLoadException.create(e);
         }
     }
+
+    public ConduitMod prepareMod() throws ModLoadException {
+        try {
+            if (modInstance != null) throw new ModLoadException("Mod is already prepared");
+            modInstance = mainConstr.newInstance();
+            clientClass = modInstance.getClientMod();
+            serverClass = modInstance.getServerMod();
+            hasClientMod = clientClass != null;
+            hasServerMod = serverClass != null;
+            modInstance.setConfig(config);
+            modInstance.setId(id);
+            if (hasClientMod) {
+                try {
+                    clientConstr = clientClass.getDeclaredConstructor();
+                    clientConstr.setAccessible(true);
+                } catch (NoSuchMethodException e) {
+                    throw new ModLoadException("Client mod class " + clientClass.getName() + " does not contain a no-argument constructor");
+                }
+            }
+            if (hasServerMod) {
+                try {
+                    serverConstr = serverClass.getDeclaredConstructor();
+                    serverConstr.setAccessible(true);
+                } catch (NoSuchMethodException e) {
+                    throw new ModLoadException("Server mod class " + serverClass.getName() + " does not contain a no-argument constructor");
+                }
+            }
+            modPrepared = true;
+            return modInstance;
+        } catch (Exception e) {
+            throw ModLoadException.create(e);
+        }
+    }
+
+    public ClientMod prepareClient() throws ModLoadException {
+        if (hasClientMod) {
+            try {
+                if (clientConstr == null) throw new ModLoadException("Must prepare mod before preparing client");
+                if (clientInstance != null) throw new ModLoadException("Client is already prepared");
+                clientInstance = clientConstr.newInstance();
+                modInstance.setClientMod(clientInstance);
+                clientPrepared = true;
+            } catch (Exception e) {
+                throw ModLoadException.create(e);
+            }
+        }
+        return clientInstance;
+    }
+    public ServerMod prepareServer() throws ModLoadException {
+        if (hasServerMod) {
+            try {
+                if (serverConstr == null) throw new ModLoadException("Must prepare mod before preparing server");
+                if (serverInstance != null) throw new ModLoadException("Server is already prepared");
+                serverInstance = serverConstr.newInstance();
+                modInstance.setServerMod(serverInstance);
+                serverPrepared = true;
+            } catch (Exception e) {
+                throw ModLoadException.create(e);
+            }
+        }
+        return serverInstance;
+    }
+
     public ConduitMod getInstance() {
         return modInstance;
     }
+    public ServerMod getServerInstance() {
+        return serverInstance;
+    }
+    public ClientMod getClientInstance() {
+        return clientInstance;
+    }
+
     public Class<? extends ConduitMod> getMainClass() {
         return mainClass;
     }
@@ -43,5 +117,37 @@ public class ModWrapper {
     }
     public Class<? extends ServerMod> getServerClass() {
         return serverClass;
+    }
+
+    public ModConfiguration getConfig() {
+        return config;
+    }
+
+    public String getId() {
+        return id;
+    }
+    void incrementId() {
+        Pattern p = Pattern.compile("_[0-9]+");
+        Matcher m = p.matcher(id);
+        if (m.find()) {
+            String group = m.group(m.groupCount());
+            int num = Integer.parseInt(group.substring(1))+1;
+            id = id.substring(0, id.length()-group.length()) + "_" + num;
+        } else {
+            id = id + "_1";
+        }
+    }
+
+    public boolean isPrepared() {
+        return modPrepared && clientPrepared && serverPrepared;
+    }
+    public boolean isMainPrepared() {
+        return modPrepared;
+    }
+    public boolean isClientPrepared() {
+        return clientPrepared;
+    }
+    public boolean isServerPrepared() {
+        return serverPrepared;
     }
 }

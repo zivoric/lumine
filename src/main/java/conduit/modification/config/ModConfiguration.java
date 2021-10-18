@@ -30,18 +30,22 @@ public class ModConfiguration {
         // optional
         private int minVersion;
         private String[] dependencies;
-        private String[] dependents;
+        // removed dependents for now, makes things unnecessarily complicated
+        //private String[] dependents;
         private String id;
         public int getMinVersion() {
             return minVersion;
         }
         public String[] getDependencies() {
+            if (dependencies == null) dependencies = new String[0];
             return dependencies;
         }
-        public String[] getDependents() {
+        /*public String[] getDependents() {
+            if (dependents == null) dependents = new String[0];
             return dependents;
-        }
+        }*/
         public String getId() {
+            if (id == null) id = "";
             return id;
         }
     }

@@ -1,6 +1,7 @@
 package conduit.launch.server;
 
 import conduit.launch.ConduitTweaker;
+import conduit.modification.ModManager;
 import net.minecraft.launchwrapper.Launch;
 
 import java.util.ArrayList;
@@ -13,6 +14,9 @@ public class ConduitServer {
         String tweakClass = ConduitTweaker.class.getName();
         addOrReplace(list, "--tweakClass", tweakClass);
         addOrReplace(list, "--conduitEnvironment", "SERVER");
+        ModManager.initialize();
+        ModManager.getInstance().prepareMods();
+        ModManager.getInstance().initializeMods();
         Launch.main(list.toArray(new String[0]));
     }
     private static void addOrReplace(List<String> list, String prefix, String arg) {

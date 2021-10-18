@@ -5,8 +5,8 @@ import net.minecraft.util.Identifier;
 public class IDKey {
 private final String domain;
 private final String key;
-private static final String KEY_ALLOWED = "[a-z0-9-_/.]{1,100}";
-private static final String DOMAIN_ALLOWED= "[a-z0-9-_.]{1,100}";
+public static final String KEY_ALLOWED = "[a-z0-9-_/.]{1,100}";
+public static final String DOMAIN_ALLOWED= "[a-z0-9-_.]{1,100}";
 //private static final String KEY_DISALLOWED = "[^a-z0-9-_.]";
 //private static final String DOMAIN_DISALLOWED = "[^a-z0-9-_.]";
 
