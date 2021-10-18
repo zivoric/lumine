@@ -53,7 +53,7 @@ public class ModManager {
                 try {
                     config = new ModConfiguration(configStream);
                 } catch (IllegalArgumentException e) {
-                    throw new ModLoadException("Failed to load configuration: " + e.getMessage());
+                    throw ModLoadException.create(e);
                 }
                 Class<?> modClass;
                 try {

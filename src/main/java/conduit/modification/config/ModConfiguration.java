@@ -2,6 +2,8 @@ package conduit.modification.config;
 
 import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import conduit.Conduit;
 
 import java.io.*;
 import java.util.*;
@@ -53,11 +55,11 @@ public class ModConfiguration {
     private final JsonObject json;
     public ModConfiguration(InputStream stream) throws IllegalArgumentException {
         Gson gson = new GsonBuilder().create();
-        Reader reader = new InputStreamReader(stream);
         try {
-            values = gson.fromJson(reader, ConfigValues.class);
-            json = new JsonParser().parse(reader).getAsJsonObject();
-        } catch (JsonSyntaxException|JsonIOException|IllegalStateException e) {
+            String jsonStr = new String(stream.readAllBytes());
+            values = gson.fromJson(jsonStr, ConfigValues.class);
+            json = new JsonParser().parse(jsonStr).getAsJsonObject();
+        } catch (JsonSyntaxException | JsonIOException | IllegalStateException | IOException e) {
             throw new IllegalArgumentException("Invalid configuration format: " + e.getMessage());
         }
         for (String arg : REQUIRED_ARGS) {
