@@ -15,7 +15,6 @@ public class ConduitClient {
         String tweakClass = ConduitTweaker.class.getName();
         addOrReplace(list, "--tweakClass", tweakClass);
         addOrReplace(list, "--conduitEnvironment", "CLIENT");
-        Class<?> modManagerClass;
         ModManager.initialize();
         ModManager.getInstance().prepareMods();
         ModManager.getInstance().initializeMods();
