@@ -24,6 +24,22 @@ public class ModManager {
     public static ModManager getInstance() {
         return instance;
     }
+    public static ModManager getOrCreateInstance() throws ModLoadException {
+        if (instance != null) return instance;
+        Class<?> modManagerClass;
+        try {
+            modManagerClass = ClassLoader.getPlatformClassLoader().loadClass(ModManager.class.getName());
+            Object modManager = modManagerClass.getMethod("getInstance").invoke(null);
+            if (modManager == null) {
+                modManager = modManagerClass.getDeclaredConstructor().newInstance();
+            }
+            instance = (ModManager) modManager;
+        } catch (Exception e) {
+            modManagerClass = null;
+            throw ModLoadException.create(e);
+        }
+        return instance;
+    }
     private void initInstance() {
         Map<String, ModWrapper> modMap = new LinkedHashMap<>();
         File minecraftDir = null;
@@ -135,6 +151,30 @@ public class ModManager {
             }
         }
     }
+    public void initializeClientMods() {
+        for (ModWrapper mod : mods) {
+            if (mod.isClientPrepared()) {
+                try {
+                    mod.getInstance().getClientModInstance().initialize();
+                } catch (IllegalStateException ignored) {
+                } catch (Exception e) {
+                    Conduit.LOGGER.error("Error while initializing client mod " + mod.getClientClass().getName() + ": " + ModRuntimeException.create(e));
+                }
+            }
+        }
+    }
+    public void initializeServerMods() {
+        for (ModWrapper mod : mods) {
+            if (mod.isServerPrepared()) {
+                try {
+                    mod.getInstance().getServerModInstance().initialize();
+                } catch (IllegalStateException ignored) {
+                } catch (Exception e) {
+                    Conduit.LOGGER.error("Error while initializing server mod " + mod.getClientClass().getName() + ": " + ModRuntimeException.create(e));
+                }
+            }
+        }
+    }
     public void terminateMods() {
         ArrayList<ModWrapper> reversed = new ArrayList<>(mods);
         Collections.reverse(reversed);
@@ -162,7 +202,11 @@ public class ModManager {
         if (instance != null) {
             throw new IllegalStateException("Mod manager is already initialized");
         }
-        instance = new ModManager();
+        try {
+            getOrCreateInstance();
+        } catch (ModLoadException e) {
+            Conduit.LOGGER.error("Error trying to initialize mod manager: ", e);
+        }
         instance.initInstance();
     }
 }

@@ -8,10 +8,12 @@ import conduit.injection.FunctionInjector;
 import conduit.injection.VoidInjector;
 import conduit.injection.annotations.CacheValue;
 import conduit.injection.annotations.InvokeInjection;
+import conduit.injection.annotations.PassInstance;
 import conduit.injection.annotations.ReplaceInjection;
 import conduit.injection.util.InjectProperties;
 import conduit.Conduit;
 import conduit.injection.util.MethodGrabber;
+import conduit.modification.ModManager;
 import conduit.util.CRegistry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
@@ -28,6 +30,7 @@ public final class CoreInjects {
         INJECTORS.add(new ClassInjector<>(
                 new VoidInjector<CommandManager>(CommandManager::new) {
                     @InvokeInjection(InjectProperties.Point.RETURN)
+                    @PassInstance
                     static void init(CommandManager instance, CommandManager.RegistrationEnvironment commandEnvironment) {
                         Commands.get().forEach(cmd -> updateRegistry(instance, cmd));
                     }
@@ -44,12 +47,16 @@ public final class CoreInjects {
                 new FunctionInjector<MinecraftServer>(MinecraftServer.class, MinecraftServer::getServerModName) {
                     @ReplaceInjection
                     @CacheValue
-                    public static String serverName(MinecraftServer instance) {
+                    public static String serverName() {
                         return "conduit";
                     }
                 },
-                new FunctionInjector<>((MethodGrabber.Args1<Function<Thread, ? extends MinecraftServer>, ? extends MinecraftServer>) MinecraftServer::startServer) {
-
+                new FunctionInjector<MinecraftServer>((MethodGrabber.Args1<Function<Thread, ? extends MinecraftServer>, ? extends MinecraftServer>) MinecraftServer::startServer) {
+                    @InvokeInjection(InjectProperties.Point.START)
+                    public static <S extends MinecraftServer> void initializeMods(Function<Thread,S> func) {
+                        ModManager.getInstance().prepareServerMods();
+                        ModManager.getInstance().initializeServerMods();
+                    }
                 }
         ));
 

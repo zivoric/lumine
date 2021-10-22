@@ -31,7 +31,7 @@ public class InjectionVisitor extends ClassVisitor {
                 for (MethodInjector.InjectorInfo injectorMethod : injector.getInjectorMethods()) {
                     if (injectorMethod.annotation() instanceof InvokeInjection annotation) {
                         Conduit.log("Injecting invoke to " + injectorMethod.method().getName() + " in " + name + desc + " at " + annotation.value());
-                        InsnList invokeInsns = invokeInsns(injector, injectorMethod, isStatic, injectorMethod.cache());
+                        InsnList invokeInsns = invokeInsns(injector, injectorMethod, isStatic, injectorMethod.cache(), injectorMethod.passInstance());
                         invokeInsns.add(new InsnNode(Opcodes.POP));
                         if (annotation.value() == InjectProperties.Point.START) {
                             mv = new StartInvokeAdapter(mv, access, name, desc, invokeInsns);
@@ -40,13 +40,13 @@ public class InjectionVisitor extends ClassVisitor {
                         }
                     } else if (injectorMethod.annotation() instanceof ReturnInjection) {
                         Conduit.log("Injecting return to " + injectorMethod.method().getName() + " in " + name + desc);
-                        InsnList invokeInsns = invokeInsns(injector, injectorMethod, isStatic, injectorMethod.cache());
+                        InsnList invokeInsns = invokeInsns(injector, injectorMethod, isStatic, injectorMethod.cache(), injectorMethod.passInstance());
                         invokeInsns.insert(new InsnNode(Opcodes.POP));
                         invokeInsns.add(getCastInsns(pair.strType()));
                         mv = new ReturnInvokeAdapter(mv, access, name, desc, invokeInsns);
                     } else if (injectorMethod.annotation() instanceof ReplaceInjection) {
                         Conduit.log("Injecting replace to " + injectorMethod.method().getName() + " in " + name + desc);
-                        InsnList invokeInsns = invokeInsns(injector, injectorMethod, isStatic, injectorMethod.cache());
+                        InsnList invokeInsns = invokeInsns(injector, injectorMethod, isStatic, injectorMethod.cache(), injectorMethod.passInstance());
                         invokeInsns.add(getCastInsns(pair.strType()));
                         invokeInsns.add(new InsnNode(Type.getType(pair.strType()).getOpcode(Opcodes.IRETURN)));
                         mv = new ReturnInvokeAdapter(mv, access, name, desc, invokeInsns);
@@ -56,33 +56,27 @@ public class InjectionVisitor extends ClassVisitor {
         }
         return mv;
     }
-    private InsnList invokeInsns(MethodInjector injector, MethodInjector.InjectorInfo pair, boolean isStatic, boolean cacheValue) {
+    private InsnList invokeInsns(MethodInjector injector, MethodInjector.InjectorInfo pair, boolean isStatic, boolean cacheValue, boolean passInstance) {
         MethodInfo mPair = MethodInfo.fromMethod(pair.method());
         String[] params = mPair.stringArgs();
+        int arrLength = params.length + (isStatic || !passInstance ? 0 : 1);
         InsnList list = new InsnList() {{
             add(new LdcInsnNode(injector.getClass().getName()));
             add(new LdcInsnNode(mPair.toString()));
             add(new InsnNode(cacheValue ? Opcodes.ICONST_1 : Opcodes.ICONST_0));
-            add(new LdcInsnNode(params.length));
+            add(new LdcInsnNode(arrLength));
             add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/Object"));
-            if (params.length > 0) {
+            if (!isStatic && passInstance) {
                 add(new InsnNode(Opcodes.DUP));
-            }
-            if (!isStatic) {
                 add(new LdcInsnNode(0));
                 add(new VarInsnNode(Opcodes.ALOAD, 0)); // aload this
                 add(new InsnNode(Opcodes.AASTORE));
-                if (params.length > 1) {
-                    add(new InsnNode(Opcodes.DUP));
-                }
             }
-            for (int argNum = isStatic ? 0 : 1; argNum < params.length; argNum++) {
+            for (int argNum = isStatic || !passInstance ? 0 : 1; argNum < arrLength; argNum++) {
+                add(new InsnNode(Opcodes.DUP));
                 add(new LdcInsnNode(argNum));
                 add(getLoadInsns(params[argNum], argNum));
                 add(new InsnNode(Opcodes.AASTORE));
-                if (argNum < params.length - 1) {
-                    add(new InsnNode(Opcodes.DUP));
-                }
             }
             add(new MethodInsnNode(Opcodes.INVOKESTATIC, "conduit/injection/ClassInjector", "invoke", "(Ljava/lang/String;Ljava/lang/String;Z[Ljava/lang/Object;)Ljava/lang/Object;"));
         }};

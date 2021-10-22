@@ -19,22 +19,22 @@ public class FunctionInjector<T> extends MethodInjector<T> {
     public InjectProperties.Context getContext() {
         return context;
     }
-    public <R> FunctionInjector(Class<T> cl, Args1<T,R> func) {
+    public <A,R> FunctionInjector(Class<T> cl, Args1<A,R> func) {
         this(func, InjectProperties.Context.INSTANCE);
     }
-    public <B,R> FunctionInjector(Class<T> cl, Args2<T,B,R> func) {
+    public <A,B,R> FunctionInjector(Class<T> cl, Args2<A,B,R> func) {
         this(func, InjectProperties.Context.INSTANCE);
     }
-    public <B,C,R> FunctionInjector(Class<T> cl, Args3<T,B,C,R> func) {
+    public <A,B,C,R> FunctionInjector(Class<T> cl, Args3<A,B,C,R> func) {
         this(func, InjectProperties.Context.INSTANCE);
     }
-    public <B,C,D,R> FunctionInjector(Class<T> cl, Args4<T,B,C,D,R> func) {
+    public <A,B,C,D,R> FunctionInjector(Class<T> cl, Args4<A,B,C,D,R> func) {
         this(func, InjectProperties.Context.INSTANCE);
     }
-    public <B,C,D,E,R> FunctionInjector(Class<T> cl, Args5<T,B,C,D,E,R> func) {
+    public <A,B,C,D,E,R> FunctionInjector(Class<T> cl, Args5<A,B,C,D,E,R> func) {
         this(func, InjectProperties.Context.INSTANCE);
     }
-    public <B,C,D,E,F,R> FunctionInjector(Class<T> cl, Args6<T,B,C,D,E,F,R> func) {
+    public <A,B,C,D,E,F,R> FunctionInjector(Class<T> cl, Args6<A,B,C,D,E,F,R> func) {
         this(func, InjectProperties.Context.INSTANCE);
     }
     public <R> FunctionInjector(Args0<R> func) {

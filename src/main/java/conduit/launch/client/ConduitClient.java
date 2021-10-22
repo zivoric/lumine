@@ -2,6 +2,7 @@ package conduit.launch.client;
 
 import conduit.launch.ConduitTweaker;
 import conduit.modification.ModManager;
+import conduit.modification.exception.ModLoadException;
 import net.minecraft.launchwrapper.Launch;
 
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ public class ConduitClient {
         String tweakClass = ConduitTweaker.class.getName();
         addOrReplace(list, "--tweakClass", tweakClass);
         addOrReplace(list, "--conduitEnvironment", "CLIENT");
+        Class<?> modManagerClass;
         ModManager.initialize();
         ModManager.getInstance().prepareMods();
         ModManager.getInstance().initializeMods();

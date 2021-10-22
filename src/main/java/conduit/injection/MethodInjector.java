@@ -1,9 +1,6 @@
 package conduit.injection;
 
-import conduit.injection.annotations.CacheValue;
-import conduit.injection.annotations.InvokeInjection;
-import conduit.injection.annotations.ReplaceInjection;
-import conduit.injection.annotations.ReturnInjection;
+import conduit.injection.annotations.*;
 import conduit.injection.util.InjectProperties;
 import conduit.injection.util.MethodGrabber;
 import conduit.injection.util.MethodInfo;
@@ -30,9 +27,10 @@ public abstract class MethodInjector<T> {
         method = Objects.requireNonNull(MethodGrabber.methodGeneric(func));
         for (Method m : this.getClass().getDeclaredMethods()) {
             boolean cache = m.getAnnotation(CacheValue.class) != null;
+            boolean pass = m.getAnnotation(PassInstance.class) != null;
             for (Class<? extends Annotation> annotation : injectAnnotations) {
                 if (m.getAnnotation(annotation) != null) {
-                    injectorMethods.put(m, m.getAnnotation(annotation), cache);
+                    injectorMethods.put(m, m.getAnnotation(annotation), cache, pass);
                     break;
                 }
             }
@@ -43,9 +41,10 @@ public abstract class MethodInjector<T> {
         this.method = method;
         for (Method m : this.getClass().getDeclaredMethods()) {
             boolean cache = m.getAnnotation(CacheValue.class) != null;
+            boolean pass = m.getAnnotation(PassInstance.class) != null;
             for (Class<? extends Annotation> annotation : injectAnnotations) {
                 if (m.getAnnotation(annotation) != null) {
-                    injectorMethods.put(m, m.getAnnotation(annotation), cache);
+                    injectorMethods.put(m, m.getAnnotation(annotation), cache, pass);
                     break;
                 }
             }
@@ -56,10 +55,11 @@ public abstract class MethodInjector<T> {
         final InjectorMethodList injectorMethods = new InjectorMethodList();
         for (Method m : cl.getDeclaredMethods()) {
             boolean cache = m.getAnnotation(CacheValue.class) != null;
+            boolean pass = m.getAnnotation(PassInstance.class) != null;
             for (Annotation annotation : m.getAnnotations()) {
                 for (Class<? extends Annotation> inject : injectAnnotations) {
                     if (inject.getName().equals(annotation.annotationType().getName())) {
-                        injectorMethods.put(m, null, cache);
+                        injectorMethods.put(m, null, cache, pass);
                     }
                 }
             }
@@ -90,8 +90,8 @@ public abstract class MethodInjector<T> {
     public abstract InjectProperties.Context getContext();
 
     public static final class InjectorMethodList extends ArrayList<InjectorInfo> {
-        public void put(Method m, Annotation a, boolean cache) {
-            add(new InjectorInfo(m, a, cache));
+        public void put(Method m, Annotation a, boolean cache, boolean pass) {
+            add(new InjectorInfo(m, a, cache, pass));
         }
         public int remove(Method m, Annotation a) {
             int count = 0;
@@ -127,10 +127,12 @@ public abstract class MethodInjector<T> {
         private final Method method;
         private final Annotation annotation;
         private final boolean cacheValue;
-        private InjectorInfo(Method m, Annotation a, boolean cache) {
+        private final boolean passInstance;
+        private InjectorInfo(Method m, Annotation a, boolean cache, boolean pass) {
             method = m;
             annotation = a;
             cacheValue = cache;
+            passInstance = pass;
         }
         public Method method() {
             return method;
@@ -140,6 +142,9 @@ public abstract class MethodInjector<T> {
         }
         public boolean cache() {
             return cacheValue;
+        }
+        public boolean passInstance() {
+            return passInstance;
         }
     }
 }
