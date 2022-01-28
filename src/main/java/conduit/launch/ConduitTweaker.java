@@ -3,11 +3,14 @@ package conduit.launch;
 import conduit.Conduit;
 import conduit.ConduitConstants;
 import conduit.launch.ConduitTransformer;
+import conduit.modification.ModManagementLoader;
+import conduit.modification.exception.ModManagementException;
 import conduit.util.GameEnvironment;
 import net.minecraft.launchwrapper.ITweaker;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,8 +44,18 @@ public class ConduitTweaker implements ITweaker {
 		} catch (IllegalAccessException e) {
 			throw new IllegalArgumentException("Environment already set at launch. This should never happen!");
 		}
-		ConduitConstants.instance(version.substring(0, version.indexOf("-conduit")));
+		ConduitConstants.instance(version.substring(0, version.indexOf("-conduit")), game);
 		Conduit.log("Tweaker class loaded! Running minecraft " + Conduit.getEnvironment().toString().toLowerCase() + " version " + ConduitConstants.instance().MINECRAFT_VERSION_NAME);
+		Conduit.log("Game directory: " + game.toURI());
+		try {
+			ModManagementLoader loader = ModManagementLoader.create();
+			loader.initializeModManager();
+			loader.getModManager();
+			loader.invoke("prepareMods");
+			loader.invoke("initializeMods");
+		} catch (ModManagementException | InvocationTargetException e) {
+			Conduit.LOGGER.error("Error while initializing mod manager", e);
+		}
 	}
 
 	@Override

@@ -1,11 +1,13 @@
 package conduit.modification;
 
 import conduit.Conduit;
+import conduit.ConduitConstants;
 import conduit.modification.config.ModConfiguration;
 import conduit.modification.exception.ModLoadException;
 import conduit.modification.exception.ModRuntimeException;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.server.MinecraftServer;
 
 import java.io.File;
 import java.io.InputStream;
@@ -24,31 +26,9 @@ public class ModManager {
     public static ModManager getInstance() {
         return instance;
     }
-    public static ModManager getOrCreateInstance() throws ModLoadException {
-        if (instance != null) return instance;
-        Class<?> modManagerClass;
-        try {
-            modManagerClass = ClassLoader.getPlatformClassLoader().loadClass(ModManager.class.getName());
-            Object modManager = modManagerClass.getMethod("getInstance").invoke(null);
-            if (modManager == null) {
-                modManager = modManagerClass.getDeclaredConstructor().newInstance();
-            }
-            instance = (ModManager) modManager;
-        } catch (Exception e) {
-            modManagerClass = null;
-            throw ModLoadException.create(e);
-        }
-        return instance;
-    }
     private void initInstance() {
         Map<String, ModWrapper> modMap = new LinkedHashMap<>();
-        File minecraftDir = null;
-        try {
-            minecraftDir = new File(SharedConstants.class.getProtectionDomain().getCodeSource().getLocation().toURI())
-                    .getParentFile().getParentFile().getParentFile();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
+        File minecraftDir = ConduitConstants.instance().MINECRAFT_DIRECTORY;
         File[] fileArray = null;
         if (minecraftDir != null) {
             modFolder = new File(minecraftDir, "cmods");
@@ -202,11 +182,7 @@ public class ModManager {
         if (instance != null) {
             throw new IllegalStateException("Mod manager is already initialized");
         }
-        try {
-            getOrCreateInstance();
-        } catch (ModLoadException e) {
-            Conduit.LOGGER.error("Error trying to initialize mod manager: ", e);
-        }
+        instance = new ModManager();
         instance.initInstance();
     }
 }

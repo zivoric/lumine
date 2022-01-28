@@ -58,7 +58,7 @@ public class ModConfiguration {
         try {
             String jsonStr = new String(stream.readAllBytes());
             values = gson.fromJson(jsonStr, ConfigValues.class);
-            json = new JsonParser().parse(jsonStr).getAsJsonObject();
+            json = JsonParser.parseString(jsonStr).getAsJsonObject();
         } catch (JsonSyntaxException | JsonIOException | IllegalStateException | IOException e) {
             throw new IllegalArgumentException("Invalid configuration format: " + e.getMessage());
         }

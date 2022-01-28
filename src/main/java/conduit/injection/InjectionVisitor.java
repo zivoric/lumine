@@ -16,8 +16,8 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 public class InjectionVisitor extends ClassVisitor {
-    private final ClassInjector clInjector;
-    public InjectionVisitor(ClassVisitor classVisitor, ClassInjector injector) {
+    private final ClassInjector<?> clInjector;
+    public InjectionVisitor(ClassVisitor classVisitor, ClassInjector<?> injector) {
         super(Opcodes.ASM9, classVisitor);
         clInjector = injector;
     }
@@ -26,7 +26,7 @@ public class InjectionVisitor extends ClassVisitor {
         MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
         MethodInfo pair = new MethodInfo(name, desc);
         boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
-        for (MethodInjector injector : clInjector.methodInjectors()) {
+        for (MethodInjector<?> injector : clInjector.methodInjectors()) {
             if (name.equals(injector.name()) && desc.equals(injector.desc())) {
                 for (MethodInjector.InjectorInfo injectorMethod : injector.getInjectorMethods()) {
                     if (injectorMethod.annotation() instanceof InvokeInjection annotation) {
@@ -59,7 +59,7 @@ public class InjectionVisitor extends ClassVisitor {
     private InsnList invokeInsns(MethodInjector injector, MethodInjector.InjectorInfo pair, boolean isStatic, boolean cacheValue, boolean passInstance) {
         MethodInfo mPair = MethodInfo.fromMethod(pair.method());
         String[] params = mPair.stringArgs();
-        int arrLength = params.length + (isStatic || !passInstance ? 0 : 1);
+        int arrLength = params.length; //+ (isStatic || !passInstance ? 0 : 1);
         InsnList list = new InsnList() {{
             add(new LdcInsnNode(injector.getClass().getName()));
             add(new LdcInsnNode(mPair.toString()));
@@ -72,7 +72,7 @@ public class InjectionVisitor extends ClassVisitor {
                 add(new VarInsnNode(Opcodes.ALOAD, 0)); // aload this
                 add(new InsnNode(Opcodes.AASTORE));
             }
-            for (int argNum = isStatic || !passInstance ? 0 : 1; argNum < arrLength; argNum++) {
+            for (int argNum = isStatic || !passInstance ? 0 : 1; argNum < params.length; argNum++) {
                 add(new InsnNode(Opcodes.DUP));
                 add(new LdcInsnNode(argNum));
                 add(getLoadInsns(params[argNum], argNum));

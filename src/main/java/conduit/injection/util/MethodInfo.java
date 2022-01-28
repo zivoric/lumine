@@ -1,5 +1,6 @@
 package conduit.injection.util;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -67,11 +68,23 @@ public class MethodInfo {
         return new MethodInfo(name, desc);
     }
     public static MethodInfo fromMethod(Method method) {
-        String name = method.getName();
+        try {
+            Field sigField = Method.class.getDeclaredField("signature");
+            sigField.setAccessible(true);
+            String sig = (String) sigField.get(method);
+            if(sig != null) {
+                String name = sig.substring(0, sig.indexOf("("));
+                String desc = sig.substring(sig.indexOf("("));
+                return new MethodInfo(name, desc);
+            }
+        } catch (IllegalAccessException|NoSuchFieldException e) {
+            e.printStackTrace();
+        }
         StringBuilder desc = new StringBuilder("(");
         for (Class<?> cl : method.getParameterTypes()) {
             buildType(desc, cl);
         }
+        String name = method.getName();
         desc.append(")");
         Class<?> returnType = method.getReturnType();
         buildType(desc, returnType);

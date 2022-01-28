@@ -1,10 +1,10 @@
 package conduit.util;
 
 public enum MinecraftVersion {
-	V1_17_1(11701, "1.17.1");
+	V1_18_1(11801, "1.18.1");
 	
-	private int numericVersion;
-	private String versionName;
+	private final int numericVersion;
+	private final String versionName;
 	private MinecraftVersion(int numeric, String name) {
 		numericVersion = numeric;
 		versionName = name;

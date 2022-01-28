@@ -1,118 +1,138 @@
 package conduit.injection.util;
 
+import conduit.injection.generic.GenericMethod;
+
 import java.io.Serializable;
 import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.*;
 
 public class MethodGrabber {
 
     public static <A> MethodInfo voidName(Class<A> cl, Void1<A> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B> MethodInfo voidName(Class<A> cl, Void2<A,B> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C> MethodInfo voidName(Class<A> cl, Void3<A,B,C> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C,D> MethodInfo voidName(Class<A> cl, Void4<A,B,C,D> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C,D,E> MethodInfo voidName(Class<A> cl, Void5<A,B,C,D,E> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C,D,E,F> MethodInfo voidName(Class<A> cl, Void6<A,B,C,D,E,F> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,R> MethodInfo methodName(Class<A> cl, Args1<A,R> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,R> MethodInfo methodName(Class<A> cl, Args2<A,B,R> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C,R> MethodInfo methodName(Class<A> cl, Args3<A,B,C,R> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C,D,R> MethodInfo methodName(Class<A> cl, Args4<A,B,C,D,R> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C,D,E,R> MethodInfo methodName(Class<A> cl, Args5<A,B,C,D,E,R> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C,D,E,F,R> MethodInfo methodName(Class<A> cl, Args6<A,B,C,D,E,F,R> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static MethodInfo staticVoidName(Void0 func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A> MethodInfo staticVoidName(Void1<A> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B> MethodInfo staticVoidName(Void2<A,B> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C> MethodInfo staticVoidName(Void3<A,B,C> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C,D> MethodInfo staticVoidName(Void4<A,B,C,D> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C,D,E> MethodInfo staticVoidName(Void5<A,B,C,D,E> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C,D,E,F> MethodInfo staticVoidName(Void6<A,B,C,D,E,F> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <R> MethodInfo staticMethodName(Args0<R> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,R> MethodInfo staticMethodName(Args1<A,R> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,R> MethodInfo staticMethodName(Args2<A,B,R> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C,R> MethodInfo staticMethodName(Args3<A,B,C,R> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C,D,R> MethodInfo staticMethodName(Args4<A,B,C,D,R> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C,D,E,R> MethodInfo staticMethodName(Args5<A,B,C,D,E,R> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
     public static <A,B,C,D,E,F,R> MethodInfo staticMethodName(Args6<A,B,C,D,E,F,R> func) {
-        return methodGeneric(func);
+        return fromLambda(func);
     }
 
-    public static MethodInfo methodGeneric(LambdaGrabber func) {
-        Class<?> cl = func.getClass();
+    public static <T> MethodInfo fromGeneric(GenericMethod<T> generic) {
+        Class<T> cl = generic.targetClass();
+        List<Method> methods = Arrays.asList(cl.getMethods());
+        if (generic.name() != null) {
+            methods = methods.stream().filter(mm -> mm.getName().equalsIgnoreCase(generic.name())).toList();
+        }
+        Method m;
+        try {
+            m = methods.get(generic.index());
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new ArrayIndexOutOfBoundsException("Error finding generic method: index " + generic.index() + " is out of bounds for class " + cl);
+        }
+        return MethodInfo.fromMethod(m);
+    }
+
+    public static MethodInfo fromLambda(LambdaGrabber func) {
+        Class<?> cl = Objects.requireNonNull(func).getClass();
         try {
             Method m = cl.getDeclaredMethod("writeReplace");
             m.setAccessible(true);

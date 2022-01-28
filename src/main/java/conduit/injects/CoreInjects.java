@@ -13,7 +13,9 @@ import conduit.injection.annotations.ReplaceInjection;
 import conduit.injection.util.InjectProperties;
 import conduit.Conduit;
 import conduit.injection.util.MethodGrabber;
+import conduit.modification.ModManagementLoader;
 import conduit.modification.ModManager;
+import conduit.modification.exception.ModManagementException;
 import conduit.util.CRegistry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
@@ -54,8 +56,14 @@ public final class CoreInjects {
                 new FunctionInjector<MinecraftServer>((MethodGrabber.Args1<Function<Thread, ? extends MinecraftServer>, ? extends MinecraftServer>) MinecraftServer::startServer) {
                     @InvokeInjection(InjectProperties.Point.START)
                     public static <S extends MinecraftServer> void initializeMods(Function<Thread,S> func) {
-                        ModManager.getInstance().prepareServerMods();
-                        ModManager.getInstance().initializeServerMods();
+                        try {
+                            ModManagementLoader loader = ModManagementLoader.create();
+                            loader.getModManager();
+                            loader.invoke("prepareServerMods");
+                            loader.invoke("initializeServerMods");
+                        } catch (ModManagementException e) {
+                            Conduit.LOGGER.error("Error while initializing server mods", e);
+                        }
                     }
                 }
         ));

@@ -1,10 +1,14 @@
 package conduit.launch.client;
 
+import conduit.Conduit;
 import conduit.launch.ConduitTweaker;
+import conduit.modification.ModManagementLoader;
 import conduit.modification.ModManager;
 import conduit.modification.exception.ModLoadException;
+import conduit.modification.exception.ModManagementException;
 import net.minecraft.launchwrapper.Launch;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,9 +19,9 @@ public class ConduitClient {
         String tweakClass = ConduitTweaker.class.getName();
         addOrReplace(list, "--tweakClass", tweakClass);
         addOrReplace(list, "--conduitEnvironment", "CLIENT");
-        ModManager.initialize();
+        /*ModManager.initialize();
         ModManager.getInstance().prepareMods();
-        ModManager.getInstance().initializeMods();
+        ModManager.getInstance().initializeMods();*/
         Launch.main(list.toArray(new String[0]));
     }
     private static void addOrReplace(List<String> list, String prefix, String arg) {

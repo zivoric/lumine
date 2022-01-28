@@ -7,7 +7,7 @@ public enum ChatColors {
 	STRIKETHROUGH('m'), UNDERLINE('n'), ITALIC('o'), RESET('r');
 	
 	private static final char COLOR_SYMBOL = '\u00A7';
-	private static String validCodes = "0123456789AaBbCcDdEeFfKkLlMmNnOoRr";
+	private static final String validCodes = "0123456789AaBbCcDdEeFfKkLlMmNnOoRr";
 	private final char colorCode;
 	ChatColors(char code) {
 		colorCode = code;

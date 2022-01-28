@@ -1,6 +1,7 @@
 package conduit.injection;
 
 import conduit.injection.annotations.*;
+import conduit.injection.generic.GenericMethod;
 import conduit.injection.util.InjectProperties;
 import conduit.injection.util.MethodGrabber;
 import conduit.injection.util.MethodInfo;
@@ -24,17 +25,11 @@ public abstract class MethodInjector<T> {
     private final InjectorMethodList injectorMethods = new InjectorMethodList();
 
     protected MethodInjector(MethodGrabber.LambdaGrabber func) {
-        method = Objects.requireNonNull(MethodGrabber.methodGeneric(func));
-        for (Method m : this.getClass().getDeclaredMethods()) {
-            boolean cache = m.getAnnotation(CacheValue.class) != null;
-            boolean pass = m.getAnnotation(PassInstance.class) != null;
-            for (Class<? extends Annotation> annotation : injectAnnotations) {
-                if (m.getAnnotation(annotation) != null) {
-                    injectorMethods.put(m, m.getAnnotation(annotation), cache, pass);
-                    break;
-                }
-            }
-        }
+        this(Objects.requireNonNull(MethodGrabber.fromLambda(func)));
+    }
+
+    protected MethodInjector(GenericMethod<?> generic) {
+        this(MethodGrabber.fromGeneric(Objects.requireNonNull(generic)));
     }
 
     protected MethodInjector(MethodInfo method) {

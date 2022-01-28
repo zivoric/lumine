@@ -68,13 +68,13 @@ public class BridgePlayerHandler implements PlayerHandler {
 
 	@Override
 	public List<Player> getOnlineOperators() {
-		return manager.getPlayerList().stream().filter(pl->manager.getOpList().isOp(pl.getGameProfile())).map(pl-> (Player) new BridgePlayer(pl)).toList();
+		return manager.getPlayerList().stream().filter(pl -> manager.getOpList().get(pl.getGameProfile()) != null).map(pl -> (Player) new BridgePlayer(pl)).toList();
 	}
 
 	@Override
 	public boolean isOperator(Player player) {
 		if (player instanceof BridgePlayer bridge) {
-			return manager.getOpList().isOp(bridge.toMinecraft().getGameProfile());
+			return manager.getOpList().get(bridge.toMinecraft().getGameProfile()) == null;
 		} else {
 			return false;
 		}

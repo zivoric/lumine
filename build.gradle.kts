@@ -27,12 +27,12 @@ plugins {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(16))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
 val conduitVersion = project.properties["conduit_patch"]!!
-val minecraftVersion = "1.17.1"
+val minecraftVersion = "1.18.1"
 
 group = project.properties["group"]!!
 version = "${minecraftVersion}_${conduitVersion}"
@@ -53,7 +53,7 @@ repositories {
 }
 
 val conduitBuild = file("build/conduit")
-val minecraftDir = file(".gradle/minecraft")
+val minecraftDir = file(".gradle/minecraft/$minecraftVersion")
 val minecraftLibs = File(minecraftDir, "libraries")
 val clientJar = File(minecraftDir, "$minecraftVersion-client.jar")
 val serverJar = File(minecraftDir, "$minecraftVersion-server.jar")
@@ -67,7 +67,7 @@ val mappings = file(".gradle/mappings/yarn-$yarnVersion-mergedv2.tiny")
 val versionManifest = file(".gradle/manifest/$minecraftVersion.json")
 
 dependencies {
-    compileOnly(fileTree(".gradle/minecraft/libraries"))
+    compileOnly(fileTree(".gradle/minecraft/$minecraftVersion/libraries"))
     compileOnly(files(namedJar))
     implementation("net.minecraft:launchwrapper:1.12")
     implementation("org.ow2.asm:asm:9.1")
@@ -170,7 +170,7 @@ tasks.register("setupEnvironment") {
 }
 
 tasks.compileJava {
-    dependsOn("setupEnvironment")
+    //dependsOn("setupEnvironment")
 }
 
 tasks.register("conduitIntermediary") {
