@@ -4,6 +4,8 @@ import conduit.util.GameEnvironment;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.List;
+
 public class Conduit {
     private static GameEnvironment environment = null;
     public static final Logger LOGGER = LogManager.getLogger();
@@ -44,6 +46,16 @@ public class Conduit {
     public static void error(String... text) {
         for (String t : text) {
             error(t);
+        }
+    }
+
+
+    public static void addOrReplaceArgs(List<String> list, String prefix, String arg) {
+        if (list.contains(prefix)) {
+            list.add(list.indexOf(prefix)+1, arg);
+        } else {
+            list.add(prefix);
+            list.add(arg);
         }
     }
 }

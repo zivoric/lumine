@@ -170,7 +170,7 @@ tasks.register("setupEnvironment") {
 }
 
 tasks.compileJava {
-    //dependsOn("setupEnvironment")
+    dependsOn("setupEnvironment")
 }
 
 tasks.register("conduitIntermediary") {

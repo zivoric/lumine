@@ -22,12 +22,28 @@ public abstract class ConduitMod {
     }
     final void terminate() throws IllegalStateException {
         if (!enabled) throw new IllegalStateException("Mod is not initialized");
+        try {
+            if (serverMod != null) {
+                serverMod.terminate();
+            }
+        } catch (IllegalStateException e) {
+            Conduit.warn("Server mod for " + modId + " is already disabled on termination.");
+        }
+        try {
+            if (clientMod != null) {
+                clientMod.terminate();
+            }
+        } catch (IllegalStateException e) {
+            Conduit.warn("Client mod for " + modId + " is already disabled on termination.");
+        }
         stop();
         enabled = false;
     }
 
-    public abstract void start();
-    public abstract void stop();
+
+
+    protected abstract void start();
+    protected abstract void stop();
 
     public Class<? extends ClientMod> getClientMod() {
         return null;

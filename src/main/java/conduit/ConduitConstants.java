@@ -27,6 +27,6 @@ public class ConduitConstants {
 	}
 
 	public static ConduitConstants instance() {
-		return instance==null ? instance(SharedConstants.getGameVersion().getName(), null) : instance;
+		return instance==null ? instance("1.18.1", null) : instance;
 	}
 }

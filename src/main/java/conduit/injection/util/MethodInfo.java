@@ -1,5 +1,7 @@
 package conduit.injection.util;
 
+import conduit.Conduit;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -68,7 +70,12 @@ public class MethodInfo {
         return new MethodInfo(name, desc);
     }
     public static MethodInfo fromMethod(Method method) {
-        try {
+        /*try {
+            Field[] fields = Method.class.getDeclaredFields();
+            Conduit.log("Method fields length: "+fields.length);
+            for (Field f : fields) {
+                Conduit.log("Method field: " + f.getName() + ", " + f.getType().getName());
+            }
             Field sigField = Method.class.getDeclaredField("signature");
             sigField.setAccessible(true);
             String sig = (String) sigField.get(method);
@@ -79,17 +86,20 @@ public class MethodInfo {
             }
         } catch (IllegalAccessException|NoSuchFieldException e) {
             e.printStackTrace();
-        }
+        }*/
+        return fromTypes(method.getName(), method.getReturnType(), method.getParameterTypes());
+    }
+
+    public static MethodInfo fromTypes(String name, Class<?> returnType, Class<?>... parameterTypes) {
         StringBuilder desc = new StringBuilder("(");
-        for (Class<?> cl : method.getParameterTypes()) {
+        for (Class<?> cl : parameterTypes) {
             buildType(desc, cl);
         }
-        String name = method.getName();
         desc.append(")");
-        Class<?> returnType = method.getReturnType();
         buildType(desc, returnType);
         return new MethodInfo(name, desc.toString());
     }
+
     public static StringBuilder buildType(StringBuilder desc, Class<?> cl) {
         Character symbol = InjectionUtils.UNBOXED.inverse().get(cl);
         if (symbol != null) {

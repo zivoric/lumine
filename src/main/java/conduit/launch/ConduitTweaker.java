@@ -2,8 +2,7 @@ package conduit.launch;
 
 import conduit.Conduit;
 import conduit.ConduitConstants;
-import conduit.launch.ConduitTransformer;
-import conduit.modification.ModManagementLoader;
+import conduit.modification.ModManager;
 import conduit.modification.exception.ModManagementException;
 import conduit.util.GameEnvironment;
 import net.minecraft.launchwrapper.ITweaker;
@@ -48,12 +47,12 @@ public class ConduitTweaker implements ITweaker {
 		Conduit.log("Tweaker class loaded! Running minecraft " + Conduit.getEnvironment().toString().toLowerCase() + " version " + ConduitConstants.instance().MINECRAFT_VERSION_NAME);
 		Conduit.log("Game directory: " + game.toURI());
 		try {
-			ModManagementLoader loader = ModManagementLoader.create();
-			loader.initializeModManager();
+			ModManager loader = ModManager.create();
+			loader.initialize();
 			loader.getModManager();
-			loader.invoke("prepareMods");
-			loader.invoke("initializeMods");
-		} catch (ModManagementException | InvocationTargetException e) {
+			loader.prepareMods();
+			loader.initializeMods();
+		} catch (ModManagementException e) {
 			Conduit.LOGGER.error("Error while initializing mod manager", e);
 		}
 	}

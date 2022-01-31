@@ -8,7 +8,6 @@ import conduit.injection.annotations.CacheValue;
 import conduit.injection.annotations.InvokeInjection;
 import conduit.injection.annotations.ReplaceInjection;
 import conduit.injection.util.InjectProperties;
-import conduit.modification.ModManagementLoader;
 import conduit.modification.ModManager;
 import conduit.modification.exception.ModManagementException;
 import net.minecraft.client.ClientBrandRetriever;
@@ -38,10 +37,10 @@ public class ClientInjects {
                @InvokeInjection(InjectProperties.Point.START)
                public static void runClient(RunArgs args) {
                    try {
-                       ModManagementLoader loader = ModManagementLoader.create();
+                       ModManager loader = ModManager.create();
                        loader.getModManager();
-                       loader.invoke("prepareClientMods");
-                       loader.invoke("initializeClientMods");
+                       loader.prepareClientMods();
+                       loader.initializeClientMods();
                    } catch (ModManagementException e) {
                        Conduit.LOGGER.error("Error while initializing client mods", e);
                    }

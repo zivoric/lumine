@@ -57,9 +57,12 @@ public class InjectionVisitor extends ClassVisitor {
         return mv;
     }
     private InsnList invokeInsns(MethodInjector injector, MethodInjector.InjectorInfo pair, boolean isStatic, boolean cacheValue, boolean passInstance) {
+        //Conduit.log("Method " + injector.name() + " pass instance? " + passInstance);
         MethodInfo mPair = MethodInfo.fromMethod(pair.method());
         String[] params = mPair.stringArgs();
+        //Conduit.log("Params length " + params.length);
         int arrLength = params.length; //+ (isStatic || !passInstance ? 0 : 1);
+        int offset = !isStatic && passInstance ? 1 : 0;
         InsnList list = new InsnList() {{
             add(new LdcInsnNode(injector.getClass().getName()));
             add(new LdcInsnNode(mPair.toString()));
@@ -67,15 +70,17 @@ public class InjectionVisitor extends ClassVisitor {
             add(new LdcInsnNode(arrLength));
             add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/Object"));
             if (!isStatic && passInstance) {
+                //Conduit.log("load this");
                 add(new InsnNode(Opcodes.DUP));
                 add(new LdcInsnNode(0));
                 add(new VarInsnNode(Opcodes.ALOAD, 0)); // aload this
                 add(new InsnNode(Opcodes.AASTORE));
             }
-            for (int argNum = isStatic || !passInstance ? 0 : 1; argNum < params.length; argNum++) {
+            for (int argNum = offset; argNum < params.length; argNum++) {
+                //Conduit.log("Arg num " + argNum+offset + ", param type " + params[argNum]);
                 add(new InsnNode(Opcodes.DUP));
                 add(new LdcInsnNode(argNum));
-                add(getLoadInsns(params[argNum], argNum));
+                add(getLoadInsns(params[argNum], argNum-offset+(isStatic ? 0 : 1)));
                 add(new InsnNode(Opcodes.AASTORE));
             }
             add(new MethodInsnNode(Opcodes.INVOKESTATIC, "conduit/injection/ClassInjector", "invoke", "(Ljava/lang/String;Ljava/lang/String;Z[Ljava/lang/Object;)Ljava/lang/Object;"));
@@ -92,6 +97,7 @@ public class InjectionVisitor extends ClassVisitor {
                 String unboxedName = boxed.getName().replace('.', '/');
                 add(new MethodInsnNode(Opcodes.INVOKESTATIC, unboxedName, "valueOf", "(" + param.charAt(0) + ")L" + unboxedName + ";"));
             } else {
+                //Conduit.log("ALOAD " + index + ", " + param);
                 add(new VarInsnNode(Opcodes.ALOAD, index));
             }
         }};
