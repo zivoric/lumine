@@ -1,0 +1,52 @@
+{
+    "id": "1.19-conduit_1.0.0",
+    "type": "release",
+    "inheritsFrom": "1.19",
+    "jar": "1.19",
+    "downloads": {},
+    "minimumLauncherVersion": 0,
+    "mainClass": "conduit.launch.client.ConduitClient",
+    "libraries":[
+        {
+            "name": "optifine:launchwrapper-of:2.3"
+        },
+        {
+            "name": "conduit:conduit-main:1.19_1.0.0"
+        },
+        {
+          "name": "org.ow2.asm:asm:9.1",
+          "downloads": {
+            "artifact": {
+              "path": "org/ow2/asm/asm/9.1/asm-9.1.jar",
+              "sha1": "a99500cf6eea30535eeac6be73899d048f8d12a8",
+              "size": 121790,
+              "url": "https://repo1.maven.org/maven2/org/ow2/asm/asm/9.1/asm-9.1.jar"
+            }
+          }
+        },
+        {
+          "name": "org.ow2.asm:asm-tree:9.1",
+          "downloads": {
+            "artifact": {
+              "path": "org/ow2/asm/asm/9.1/asm-tree-9.1.jar",
+              "sha1": "c333f2a855069cb8eb17a40a3eb8b1b67755d0eb",
+              "size": 52662,
+              "url": "https://repo1.maven.org/maven2/org/ow2/asm/asm-tree/9.1/asm-tree-9.1.jar"
+            }
+          }
+        },
+        {
+          "name": "org.ow2.asm:asm-commons:9.1",
+          "downloads": {
+            "artifact": {
+              "path": "org/ow2/asm/asm-commons/9.1/asm-commons-9.1.jar",
+              "sha1": "8b971b182eb5cf100b9e8d4119152d83e00e0fdd",
+              "size": 72641,
+              "url": "https://repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.1/asm-commons-9.1.jar"
+            }
+          }
+        }
+    ],
+    "releaseTime":"2034-01-14T16:05:32+00:00",
+    "time":"2034-01-14T16:05:32+00:00"
+}
