@@ -1,9 +1,9 @@
 package conduit.command;
 
+import conduit.ConduitConstants;
 import conduit.chat.ChatUtils;
 import conduit.command.argument.Argument;
 import conduit.command.argument.CommandInformation;
-import conduit.ConduitConstants;
 import conduit.util.IDKey;
 
 import java.util.Arrays;

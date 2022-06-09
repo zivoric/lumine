@@ -2,10 +2,9 @@ package conduit.modification.config;
 
 import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.stream.JsonReader;
-import conduit.Conduit;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 public class ModConfiguration {

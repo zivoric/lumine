@@ -1,5 +1,6 @@
 package conduit.injection;
 
+import conduit.Conduit;
 import conduit.injection.annotations.InvokeInjection;
 import conduit.injection.annotations.ReplaceInjection;
 import conduit.injection.annotations.ReturnInjection;
@@ -8,7 +9,6 @@ import conduit.injection.util.InjectionUtils;
 import conduit.injection.util.MethodInfo;
 import conduit.injection.visitor.ReturnInvokeAdapter;
 import conduit.injection.visitor.StartInvokeAdapter;
-import conduit.Conduit;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;

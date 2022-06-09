@@ -1,9 +1,7 @@
 package conduit.modification;
 
-import conduit.Conduit;
 import conduit.modification.exception.ModManagementException;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 

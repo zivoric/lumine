@@ -5,7 +5,8 @@ import conduit.entity.Entity;
 import conduit.server.Server;
 import conduit.util.location.BlockLocation;
 import conduit.util.location.DoubleLocation;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.LiteralTextContent;
+import net.minecraft.text.MutableText;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 
@@ -37,11 +38,11 @@ public class BridgeEntity<T extends net.minecraft.entity.Entity> implements Enti
 
 	@Override
 	public void sendMessage(String message) {
-		toMinecraft().getCommandSource().sendFeedback(new LiteralText(message), false);
+		toMinecraft().getCommandSource().sendFeedback(MutableText.of(new LiteralTextContent(message)), false);
 	}
 
 	@Override
 	public void sendError(String message) {
-		toMinecraft().getCommandSource().sendError(new LiteralText(message));
+		toMinecraft().getCommandSource().sendError(MutableText.of(new LiteralTextContent(message)));
 	}
 }

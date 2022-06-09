@@ -1,8 +1,6 @@
 package conduit.injects;
 
-import com.mojang.authlib.GameProfileRepository;
-import com.mojang.authlib.minecraft.MinecraftSessionService;
-import com.mojang.datafixers.DataFixer;
+import conduit.Conduit;
 import conduit.bridge.command.CommandBuilder;
 import conduit.command.Command;
 import conduit.command.Commands;
@@ -14,27 +12,16 @@ import conduit.injection.annotations.InvokeInjection;
 import conduit.injection.annotations.PassInstance;
 import conduit.injection.annotations.ReplaceInjection;
 import conduit.injection.util.InjectProperties;
-import conduit.Conduit;
-import conduit.injection.util.MethodGrabber;
-import conduit.injection.util.MethodInfo;
 import conduit.modification.ModManager;
 import conduit.modification.exception.ModManagementException;
 import conduit.util.CRegistry;
-import net.minecraft.resource.ResourcePackManager;
-import net.minecraft.resource.ServerResourceManager;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.WorldGenerationProgressListenerFactory;
 import net.minecraft.server.command.CommandManager;
-import net.minecraft.util.UserCache;
-import net.minecraft.util.registry.DynamicRegistryManager;
-import net.minecraft.world.SaveProperties;
-import net.minecraft.world.level.storage.LevelStorage;
 
-import java.net.Proxy;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Function;
 
 public final class CoreInjects {
     private final List<ClassInjector<?>> INJECTORS = new LinkedList<>();
@@ -44,7 +31,7 @@ public final class CoreInjects {
                 new VoidInjector<CommandManager>(CommandManager::new) {
                     @InvokeInjection(InjectProperties.Point.RETURN)
                     @PassInstance
-                    static void init(CommandManager instance, CommandManager.RegistrationEnvironment commandEnvironment) {
+                    static void init(CommandManager instance, CommandManager.RegistrationEnvironment commandEnvironment, CommandRegistryAccess access) {
                         Commands.get().forEach(cmd -> updateRegistry(instance, cmd));
                     }
 

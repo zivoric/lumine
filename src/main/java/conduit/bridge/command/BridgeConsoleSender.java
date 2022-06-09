@@ -6,7 +6,8 @@ import conduit.command.ConsoleSender;
 import conduit.server.Server;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.LiteralTextContent;
+import net.minecraft.text.MutableText;
 
 public class BridgeConsoleSender implements ConsoleSender {
 	private final MinecraftServer output;
@@ -17,12 +18,12 @@ public class BridgeConsoleSender implements ConsoleSender {
 	}
 	@Override
 	public void sendMessage(String message) {
-		source.sendFeedback(new LiteralText(ChatColors.removeColorCodes(message)), false);
+		source.sendFeedback(MutableText.of(new LiteralTextContent(ChatColors.removeColorCodes(message))), false);
 	}
 
 	@Override
 	public void sendError(String message) {
-		source.sendError(new LiteralText(ChatColors.removeColorCodes(message)));
+		source.sendError(MutableText.of(new LiteralTextContent(ChatColors.removeColorCodes(message))));
 	}
 
 	@Override

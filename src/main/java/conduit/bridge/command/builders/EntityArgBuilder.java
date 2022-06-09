@@ -46,7 +46,8 @@ public class EntityArgBuilder extends ArgumentBuilder<EntityArg, EntityArgumentT
     @Override
     public EntityArg fromBrigadier(String identifier, EntityArgumentType argument) {
         JsonObject object = new JsonObject();
-        new EntityArgumentType.Serializer().toJson(argument, object);
+        EntityArgumentType.Serializer serializer = new EntityArgumentType.Serializer();
+        serializer.writeJson(serializer.getArgumentTypeProperties(argument), object);
         boolean allowMultiple = object.get("amount").getAsString().equals("single");
         boolean onlyPlayers = object.get("type").getAsString().equals("players");
         if (onlyPlayers) {

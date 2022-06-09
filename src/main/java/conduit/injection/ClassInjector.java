@@ -1,7 +1,7 @@
 package conduit.injection;
 
-import conduit.injection.util.MethodInfo;
 import conduit.Conduit;
+import conduit.injection.util.MethodInfo;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 

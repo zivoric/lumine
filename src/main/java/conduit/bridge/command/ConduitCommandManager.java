@@ -1,15 +1,16 @@
 package conduit.bridge.command;
 
+import conduit.Conduit;
 import conduit.command.Command;
 import conduit.command.Commands;
-import conduit.Conduit;
 import conduit.util.CRegistry;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 
 public class ConduitCommandManager extends CommandManager {
-	public ConduitCommandManager(RegistrationEnvironment environment) {
-		super(environment);
+	public ConduitCommandManager(RegistrationEnvironment environment, CommandRegistryAccess access) {
+		super(environment, access);
 		Conduit.log("new conduit command manager initialized");
 		Commands.get().forEach(cmd -> {
 			updateRegistry(cmd);

@@ -14,7 +14,7 @@ buildscript {
         }
     }
     dependencies {
-        "classpath"(group = "net.fabricmc", name = "tiny-remapper", version = "0.4.0")
+        "classpath"(group = "net.fabricmc", name = "tiny-remapper", version = "0.8.4")
         "classpath"(group = "net.fabricmc", name = "stitch", version = project.properties["stitch_version"].toString())
         "classpath"(group = "com.google.code.gson", name = "gson", version = "2.8.8")
         "classpath"(group = "commons-io", name = "commons-io", version = "2.11.0")
@@ -32,7 +32,7 @@ java {
 }
 
 val conduitVersion = project.properties["conduit_patch"]!!
-val minecraftVersion = "1.18.1"
+val minecraftVersion = "1.19"
 
 group = project.properties["group"]!!
 version = "${minecraftVersion}_${conduitVersion}"
@@ -222,12 +222,12 @@ fun mapJar(output : File, input : File, mappings : File, libraries : File, from 
 
 fun createMappingProvider(mappings : File, from : String, to : String): IMappingProvider {
     val reader = BufferedReader(InputStreamReader(FileInputStream(mappings)))
-    val mappings = net.fabricmc.mapping.tree.TinyMappingFactory.loadWithDetection(reader)
+    val mapping = net.fabricmc.mapping.tree.TinyMappingFactory.loadWithDetection(reader)
     return IMappingProvider {
         acceptor ->
-        for (def : net.fabricmc.mapping.tree.ClassDef in mappings.classes) {
+        for (def : net.fabricmc.mapping.tree.ClassDef in mapping.classes) {
             val className = def.getName(from)
-            acceptor.acceptClass(className, def.getName(to));
+            acceptor.acceptClass(className, def.getName(to))
             for (field in def.fields) {
                 acceptor.acceptField(getMember(className, field.getName(from), field.getDescriptor(from)), field.getName(to))
             }
@@ -240,7 +240,7 @@ fun createMappingProvider(mappings : File, from : String, to : String): IMapping
 }
 
 fun getMember(className : String, memberName : String, descriptor : String) : IMappingProvider.Member {
-    return IMappingProvider.Member(className, memberName, descriptor);
+    return IMappingProvider.Member(className, memberName, descriptor)
 }
 
 fun download(url : String, dest : File) {
@@ -252,6 +252,6 @@ fun download(url : String, dest : File) {
 fun move(src : File, dest : File) : File {
     if (!dest.parentFile.exists())
         dest.parentFile.mkdirs()
-    ant.invokeMethod("move", mapOf("file" to src, "todir" to dest));
-    return File(dest, src.name);
+    ant.invokeMethod("move", mapOf("file" to src, "todir" to dest))
+    return File(dest, src.name)
 }

@@ -1,9 +1,6 @@
 package conduit;
 
-import net.minecraft.SharedConstants;
-
 import java.io.File;
-import java.net.URISyntaxException;
 
 public class ConduitConstants {
 	private static ConduitConstants instance;
@@ -27,6 +24,6 @@ public class ConduitConstants {
 	}
 
 	public static ConduitConstants instance() {
-		return instance==null ? instance("1.18.1", null) : instance;
+		return instance==null ? instance("1.19", null) : instance;
 	}
 }

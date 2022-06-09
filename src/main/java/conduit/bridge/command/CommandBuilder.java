@@ -13,7 +13,8 @@ import conduit.command.argument.ArgumentValue;
 import conduit.command.argument.CommandInformation;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.LiteralTextContent;
+import net.minecraft.text.MutableText;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,14 +61,14 @@ public class CommandBuilder {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            context.getSource().sendError(new LiteralText(ChatUtils.error("Argument error, this is a conduit bug!")));
+            context.getSource().sendError(MutableText.of(new LiteralTextContent(ChatUtils.error("Argument error, this is a conduit bug!"))));
             return 0;
         }
         try {
             return command.onCommand(new CommandInformation(command, getSender(context.getSource()), vals.toArray(new ArgumentValue<?,?>[0])));
         } catch (Exception e) {
             e.printStackTrace();
-            context.getSource().sendError(new LiteralText(ChatUtils.error()));
+            context.getSource().sendError(MutableText.of(new LiteralTextContent(ChatUtils.error())));
             return 0;
         }
     }
