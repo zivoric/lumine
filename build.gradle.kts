@@ -3,8 +3,12 @@ import net.fabricmc.tinyremapper.*
 import org.apache.commons.io.FileUtils
 import java.io.BufferedReader
 import java.io.FileInputStream
+import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
+
 
 buildscript {
     repositories {
@@ -132,9 +136,13 @@ tasks.register("downloadLibraries") {
     doLast {
         val libraries = JsonParser.parseString(FileUtils.readFileToString(versionManifest, StandardCharsets.UTF_8)).asJsonObject.getAsJsonArray("libraries")
         libraries.forEach {
-            val url = it.asJsonObject.getAsJsonObject("downloads").getAsJsonObject("artifact").get("url").asString
+            val artifact = it.asJsonObject.getAsJsonObject("downloads").getAsJsonObject("artifact")
+            val url = artifact.get("url").asString
             val fileName = url.substring(url.lastIndexOf("/") + 1)
-            download(url, File(minecraftLibs, fileName))
+            val localFile = File(minecraftLibs, fileName)
+            if (!localFile.exists() || !verifyChecksum(localFile, artifact.get("sha1").asString)) {
+                download(url, localFile)
+            }
             //project.dependencies.add("implementation", files(File(minecraftLibs, fileName)))
         }
     }
@@ -254,4 +262,21 @@ fun move(src : File, dest : File) : File {
         dest.parentFile.mkdirs()
     ant.invokeMethod("move", mapOf("file" to src, "todir" to dest))
     return File(dest, src.name)
+}
+
+fun verifyChecksum(file: File, testChecksum: String): Boolean {
+    val sha1 = MessageDigest.getInstance("SHA1")
+    val fis = FileInputStream(file)
+    val data = ByteArray(1024)
+    var read = 0
+    while (fis.read(data).also { read = it } != -1) {
+        sha1.update(data, 0, read)
+    }
+    val hashBytes = sha1.digest()
+    val sb = StringBuffer()
+    for (i in hashBytes.indices) {
+        sb.append(((hashBytes[i].toInt() and 0xff) + 0x100).toString(16).substring(1))
+    }
+    val fileHash = sb.toString()
+    return fileHash == testChecksum
 }

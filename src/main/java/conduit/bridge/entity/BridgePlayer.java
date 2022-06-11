@@ -28,4 +28,9 @@ public class BridgePlayer extends BridgeEntity<ServerPlayerEntity> implements Pl
 	public boolean setGameMode(GameMode arg) {
 		return toMinecraft().changeGameMode(net.minecraft.world.GameMode.byName(arg.toString().toLowerCase()));
 	}
+
+	@Override
+	public String getName() {
+		return toMinecraft().getName().getString();
+	}
 }

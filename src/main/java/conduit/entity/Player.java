@@ -7,4 +7,6 @@ public interface Player extends Entity {
     PlayerProfile getProfile();
     GameMode getGameMode();
     boolean setGameMode(GameMode arg);
+
+    String getName();
 }

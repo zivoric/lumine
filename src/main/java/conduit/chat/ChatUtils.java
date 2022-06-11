@@ -23,4 +23,8 @@ public class ChatUtils {
 	public static String error(String message) {
 		return getChatPrefix(ChatColors.DARK_RED, ChatColors.RED, "Conduit") + message;
 	}
+
+	public static String message(String message) {
+		return getChatPrefix() + message;
+	}
 }

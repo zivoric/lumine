@@ -11,6 +11,10 @@ public class Commands {
 	public static final Command TEST_COMMAND = register(new TestCommand());
 	public static final Command VERSION_COMMAND = register(new VersionCommand());
 	public static final Command DEBUG_SEND_COMMAND = register(new DebugSendCommand());
+	public static final Command TPA_COMMAND = register(new TpaCommand());
+	public static final Command TPACCEPT_COMMAND = register(new TpacceptCommand());
+	public static final Command TPDENY_COMMAND = register(new TpdenyCommand());
+
 	private static Command register(Command command) {
 		boolean canPut = true;
 		for (Command c : BASE_COMMANDS) {

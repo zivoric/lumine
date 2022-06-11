@@ -10,6 +10,8 @@ import net.minecraft.text.MutableText;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 
+import java.util.UUID;
+
 public class BridgeEntity<T extends net.minecraft.entity.Entity> implements Entity {
 	private final T nEntity;
 	public BridgeEntity(T nEntity) {
@@ -44,5 +46,30 @@ public class BridgeEntity<T extends net.minecraft.entity.Entity> implements Enti
 	@Override
 	public void sendError(String message) {
 		toMinecraft().getCommandSource().sendError(MutableText.of(new LiteralTextContent(message)));
+	}
+
+	@Override
+	public UUID getUUID() {
+		return toMinecraft().getUuid();
+	}
+
+	@Override
+	public void teleport(double x, double y, double z) {
+		toMinecraft().teleport(x, y, z);
+	}
+
+	@Override
+	public void teleport(DoubleLocation location) {
+		teleport(location.getX(), location.getY(), location.getZ());
+	}
+
+	@Override
+	public void teleport(Entity e) {
+		teleport(e.getLocation());
+	}
+
+	@Override
+	public boolean equals(Object other) {
+		return (other instanceof Entity e) && getUUID().equals(e.getUUID());
 	}
 }
