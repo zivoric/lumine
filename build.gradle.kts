@@ -36,7 +36,7 @@ java {
 }
 
 val conduitVersion = project.properties["conduit_patch"]!!
-val minecraftVersion = "1.19"
+val minecraftVersion = "1.19.4"
 
 group = project.properties["group"]!!
 version = "${minecraftVersion}_${conduitVersion}"
@@ -77,7 +77,7 @@ dependencies {
     implementation("org.ow2.asm:asm:9.1")
     implementation("org.ow2.asm:asm-tree:9.1")
     implementation("org.ow2.asm:asm-commons:9.1")
-    implementation("com.google.code.gson:gson:2.8.8")
+    implementation("com.google.code.gson:gson:2.8.9")
 }
 
 tasks.register("downloadManifest") {
@@ -167,12 +167,32 @@ tasks.register<Copy>("extractMappings") {
     into(outputDir)
 }
 
+// used for testing purposes only
+tasks.register("mapClient") {
+    dependsOn("downloadLibraries", "downloadMinecraft", "extractMappings")
+    val intermediaryClient = File(minecraftDir, "$minecraftVersion-client-intermediary.jar")
+    val namedClient = File(minecraftDir, "$minecraftVersion-client-named.jar")
+    outputs.upToDateWhen {namedClient.exists()}
+    doLast {
+        if (!intermediaryClient.exists()) {
+            mapJar(intermediaryClient, clientJar, mappings, minecraftLibs, "official", "intermediary")
+        }
+        if (!namedClient.exists()) {
+            mapJar(namedClient, intermediaryClient, mappings, minecraftLibs, "intermediary", "named")
+        }
+    }
+}
+
 tasks.register("setupEnvironment") {
     dependsOn("downloadLibraries", "mergeJars", "extractMappings")
     outputs.upToDateWhen {intermediaryJar.exists() && namedJar.exists()}
     doLast {
-        mapJar(intermediaryJar, mergedJar, mappings, minecraftLibs, "official", "intermediary")
-        mapJar(namedJar, intermediaryJar, mappings, minecraftLibs, "intermediary", "named")
+        if (!intermediaryJar.exists()) {
+            mapJar(intermediaryJar, mergedJar, mappings, minecraftLibs, "official", "intermediary")
+        }
+        if (!namedJar.exists()) {
+            mapJar(namedJar, intermediaryJar, mappings, minecraftLibs, "intermediary", "named")
+        }
         //project.dependencies.add("implementation", files(namedJar))
     }
 }
