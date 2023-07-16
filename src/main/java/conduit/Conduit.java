@@ -8,7 +8,7 @@ import java.util.List;
 
 public class Conduit {
     private static GameEnvironment environment = null;
-    public static final Logger LOGGER = LogManager.getLogger();
+    public static final Logger LOGGER = LogManager.getLogger("Conduit");
 
     public static void setEnvironment(GameEnvironment env) throws IllegalAccessException {
         if (environment == null)

@@ -1,13 +1,13 @@
 package conduit.client;
 
 import conduit.Conduit;
-import conduit.injection.ClassInjector;
-import conduit.injection.FunctionInjector;
-import conduit.injection.VoidInjector;
-import conduit.injection.annotations.CacheValue;
-import conduit.injection.annotations.InvokeInjection;
-import conduit.injection.annotations.ReplaceInjection;
-import conduit.injection.util.InjectProperties;
+import conduit.prisma.injection.ClassInjector;
+import conduit.prisma.injection.FunctionInjector;
+import conduit.prisma.injection.VoidInjector;
+import conduit.prisma.injection.annotations.CacheValue;
+import conduit.prisma.injection.annotations.InvokeInjection;
+import conduit.prisma.injection.annotations.ReplaceInjection;
+import conduit.prisma.injection.util.InjectProperties;
 import conduit.modification.ModManager;
 import conduit.modification.exception.ModManagementException;
 import net.minecraft.client.ClientBrandRetriever;

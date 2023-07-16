@@ -19,11 +19,7 @@ public class ConduitConstants {
 		return instance==null ? new ConduitConstants(version, mcDir) : instance;
 	}
 
-	public static ConduitConstants instance(String version) {
-		return instance(version, null);
-	}
-
 	public static ConduitConstants instance() {
-		return instance==null ? instance("1.19", null) : instance;
+		return instance==null ? instance("1.19.4", null) : instance;
 	}
 }

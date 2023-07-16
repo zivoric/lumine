@@ -2,7 +2,7 @@ package conduit.launch.client;
 
 import conduit.Conduit;
 import conduit.launch.ConduitTweaker;
-import net.minecraft.launchwrapper.Launch;
+import conduit.prisma.launch.Prisma;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,6 +14,6 @@ public class ConduitClient {
         String tweakClass = ConduitTweaker.class.getName();
         Conduit.addOrReplaceArgs(list, "--tweakClass", tweakClass);
         Conduit.addOrReplaceArgs(list, "--conduitEnvironment", "CLIENT");
-        Launch.main(list.toArray(new String[0]));
+        Prisma.main(list.toArray(new String[0]));
     }
 }

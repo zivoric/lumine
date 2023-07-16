@@ -2,17 +2,20 @@ package conduit.launch;
 
 import conduit.Conduit;
 import conduit.ConduitConstants;
-import conduit.modification.ModManager;
-import conduit.modification.exception.ModManagementException;
+import conduit.client.ClientInjects;
+import conduit.injects.CoreInjects;
+import conduit.modification.ModManagerCore;
+import conduit.prisma.launch.LaunchClassLoader;
+import conduit.prisma.transform.LaunchTweaker;
+import conduit.prisma.injection.ClassInjector;
+import conduit.prisma.transform.InjectorTransformer;
 import conduit.util.GameEnvironment;
-import net.minecraft.launchwrapper.ITweaker;
-import net.minecraft.launchwrapper.LaunchClassLoader;
-
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
-public class ConduitTweaker implements ITweaker {
+public class ConduitTweaker implements LaunchTweaker {
 	
 	private final List<String> args = new ArrayList<>();
 
@@ -45,15 +48,11 @@ public class ConduitTweaker implements ITweaker {
 		ConduitConstants.instance(version.substring(0, version.indexOf("-conduit")), game);
 		Conduit.log("Tweaker class loaded! Running minecraft " + Conduit.getEnvironment().toString().toLowerCase() + " version " + ConduitConstants.instance().MINECRAFT_VERSION_NAME);
 		Conduit.log("Game directory: " + game.toURI());
-		try {
-			ModManager loader = ModManager.create();
-			loader.initialize();
-			loader.getModManager();
-			loader.prepareMods();
-			loader.initializeMods();
-		} catch (ModManagementException e) {
-			Conduit.LOGGER.error("Error while initializing mod manager", e);
-		}
+
+		ModManagerCore.initialize();
+		ModManagerCore loader = ModManagerCore.getInstance();
+		loader.prepareMods();
+		loader.initializeMods();
 	}
 
 	@Override
@@ -68,6 +67,10 @@ public class ConduitTweaker implements ITweaker {
 
 	@Override
 	public void injectIntoClassLoader(LaunchClassLoader classLoader) {
-		classLoader.registerTransformer(ConduitTransformer.class.getName());
+		final List<ClassInjector<?>> injectors = new LinkedList<>(new CoreInjects().getInjectors());
+		if (Conduit.isClient()) {
+			injectors.addAll(new ClientInjects().getInjectors());
+		}
+		classLoader.registerTransformer(InjectorTransformer.class.getName(), injectors);
 	}
 }

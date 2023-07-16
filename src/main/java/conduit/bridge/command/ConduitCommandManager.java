@@ -1,5 +1,6 @@
 package conduit.bridge.command;
 
+import com.mojang.brigadier.ParseResults;
 import conduit.Conduit;
 import conduit.command.Command;
 import conduit.command.Commands;
@@ -12,9 +13,7 @@ public class ConduitCommandManager extends CommandManager {
 	public ConduitCommandManager(RegistrationEnvironment environment, CommandRegistryAccess access) {
 		super(environment, access);
 		Conduit.log("new conduit command manager initialized");
-		Commands.get().forEach(cmd -> {
-			updateRegistry(cmd);
-		});
+		Commands.get().forEach(this::updateRegistry);
 		//updateRegistry();
 	}
 	public void updateRegistry() {
@@ -28,7 +27,7 @@ public class ConduitCommandManager extends CommandManager {
 		Conduit.log("added conduit command with literal /" + command.getLiteralName());
 	}
 	@Override
-	public int execute(ServerCommandSource commandSource, String command) {
+	public int execute(ParseResults<ServerCommandSource> commandSource, String command) {
 		Conduit.log("Executing command " + command);
 		return super.execute(commandSource, command);
 	}

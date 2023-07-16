@@ -71,6 +71,7 @@ val mappings = file(".gradle/mappings/yarn-$yarnVersion-mergedv2.tiny")
 val versionManifest = file(".gradle/manifest/$minecraftVersion.json")
 
 dependencies {
+    implementation(project(":prisma"))
     compileOnly(fileTree(".gradle/minecraft/$minecraftVersion/libraries"))
     compileOnly(files(namedJar))
     implementation("net.minecraft:launchwrapper:1.12")

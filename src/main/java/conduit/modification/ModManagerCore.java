@@ -19,7 +19,7 @@ public class ModManagerCore {
     private List<ModWrapper> mods;
 
     private ModManagerCore() {}
-    static ModManagerCore getInstance() {
+    public static ModManagerCore getInstance() {
         return instance;
     }
     private void initInstance() {
@@ -81,7 +81,7 @@ public class ModManagerCore {
         this.mods = mods;
     }
 
-    void prepareMods() {
+    public void prepareMods() {
         for (ModWrapper mod : mods) {
             if (!mod.isMainPrepared()) {
                 try {
@@ -117,7 +117,7 @@ public class ModManagerCore {
             }
         }
     }
-    void initializeMods() {
+    public void initializeMods() {
         for (ModWrapper mod : mods) {
             if (mod.isMainPrepared()) {
                 try {
@@ -197,7 +197,7 @@ public class ModManagerCore {
         return modFolder;
     }
 
-    static void initialize() throws IllegalStateException {
+    public static void initialize() throws IllegalStateException {
         if (instance != null) {
             throw new IllegalStateException("Mod manager is already initialized");
         }
