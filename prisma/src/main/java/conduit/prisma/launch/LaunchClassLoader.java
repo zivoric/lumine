@@ -23,31 +23,27 @@ public class LaunchClassLoader extends URLClassLoader {
     private final List<URL> sources;
     private final ClassLoader parent = getClass().getClassLoader();
 
-    private final List<ClassTransformer> transformers = new ArrayList<ClassTransformer>(2);
-    private final Map<String, Class<?>> cachedClasses = new ConcurrentHashMap<String, Class<?>>();
-    private final Set<String> invalidClasses = new HashSet<String>(1000);
+    private final List<ClassTransformer> transformers = new ArrayList<>(2);
+    private final Map<String, Class<?>> cachedClasses = new ConcurrentHashMap<>();
+    private final Set<String> invalidClasses = new HashSet<>(1000);
 
-    private final Set<String> classLoaderExceptions = new HashSet<String>();
+    private final Set<String> classLoaderExceptions = new HashSet<>();
     private final Set<String> classLoaderInclusions = new HashSet<>();
-    private final Set<String> transformerExceptions = new HashSet<String>();
-    private final Map<Package, Manifest> packageManifests = new ConcurrentHashMap<Package, Manifest>();
-    private final Map<String,byte[]> resourceCache = new ConcurrentHashMap<String,byte[]>(1000);
-    private final Set<String> negativeResourceCache = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+    private final Set<String> transformerExceptions = new HashSet<>();
+    private final Map<Package, Manifest> packageManifests = new ConcurrentHashMap<>();
+    private final Map<String,byte[]> resourceCache = new ConcurrentHashMap<>(1000);
+    private final Set<String> negativeResourceCache = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private static final Manifest EMPTY = new Manifest();
 
-    private final ThreadLocal<byte[]> loadBuffer = new ThreadLocal<byte[]>();
+    private final ThreadLocal<byte[]> loadBuffer = new ThreadLocal<>();
 
     private static final String[] RESERVED_NAMES = {"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"};
-
-    private static final boolean DEBUG = Boolean.parseBoolean(System.getProperty("legacy.debugClassLoading", "false"));
-    private static final boolean DEBUG_FINER = DEBUG && Boolean.parseBoolean(System.getProperty("legacy.debugClassLoadingFiner", "false"));
-    private static final boolean DEBUG_SAVE = DEBUG && Boolean.parseBoolean(System.getProperty("legacy.debugClassLoadingSave", "false"));
     private static File tempFolder = null;
 
     public LaunchClassLoader(URL[] sources) {
         super(sources, null);
-        this.sources = new ArrayList<URL>(Arrays.asList(sources));
+        this.sources = new ArrayList<>(Arrays.asList(sources));
 
         // classloader inclusions (overrides any exclusions)
         addClassLoaderInclusion("conduit.prisma.injection.");
@@ -66,22 +62,6 @@ public class LaunchClassLoader extends URLClassLoader {
         addTransformerExclusion("com.google.common.");
         addTransformerExclusion("org.bouncycastle.");
         addTransformerExclusion("conduit.");
-
-        if (DEBUG_SAVE) {
-            int x = 1;
-            tempFolder = new File(Prisma.minecraftHome, "CLASSLOADER_TEMP");
-            while (tempFolder.exists() && x <= 10) {
-                tempFolder = new File(Prisma.minecraftHome, "CLASSLOADER_TEMP" + x++);
-            }
-
-            if (tempFolder.exists()) {
-                Prisma.getLogger().info("DEBUG_SAVE enabled, but 10 temp directories already exist, clean them and try again.");
-                tempFolder = null;
-            } else {
-                Prisma.getLogger().info("DEBUG_SAVE Enabled, saving all classes to \"%s\"", tempFolder.getAbsolutePath().replace('\\', '/'));
-                tempFolder.mkdirs();
-            }
-        }
     }
 
     public void registerTransformer(String transformerClassName, Object... args) {
@@ -202,9 +182,6 @@ public class LaunchClassLoader extends URLClassLoader {
             }
 
             final byte[] transformedClass = runTransformers(untransformedName, transformedName, getClassBytes(untransformedName));
-            if (DEBUG_SAVE) {
-                saveTransformedClass(transformedClass, transformedName);
-            }
 
             final CodeSource codeSource = urlConnection == null ? null : new CodeSource(urlConnection.getURL(), signers);
             final Class<?> clazz = defineClass(transformedName, transformedClass, 0, transformedClass.length, codeSource);
@@ -212,9 +189,6 @@ public class LaunchClassLoader extends URLClassLoader {
             return clazz;
         } catch (Throwable e) {
             invalidClasses.add(name);
-            if (DEBUG) {
-                Prisma.getLogger().trace("Exception encountered attempting classloading of "+name, e);
-            }
             throw new ClassNotFoundException(name, e);
         }
     }
@@ -276,19 +250,8 @@ public class LaunchClassLoader extends URLClassLoader {
     }
 
     private byte[] runTransformers(final String name, final String transformedName, byte[] basicClass) {
-        if (DEBUG_FINER) {
-            Prisma.getLogger().info("Beginning transform of {%s (%s)} Start Length: %d", name, transformedName, (basicClass == null ? 0 : basicClass.length));
-            for (final ClassTransformer transformer : transformers) {
-                final String transName = transformer.getClass().getName();
-                Prisma.getLogger().info("Before Transformer {%s (%s)} %s: %d", name, transformedName, transName, (basicClass == null ? 0 : basicClass.length));
-                basicClass = transformer.transform(name, transformedName, basicClass);
-                Prisma.getLogger().info("After  Transformer {%s (%s)} %s: %d", name, transformedName, transName, (basicClass == null ? 0 : basicClass.length));
-            }
-            Prisma.getLogger().info("Ending transform of {%s (%s)} Start Length: %d", name, transformedName, (basicClass == null ? 0 : basicClass.length));
-        } else {
-            for (final ClassTransformer transformer : transformers) {
-                basicClass = transformer.transform(name, transformedName, basicClass);
-            }
+        for (final ClassTransformer transformer : transformers) {
+            basicClass = transformer.transform(name, transformedName, basicClass);
         }
         return basicClass;
     }
@@ -378,13 +341,10 @@ public class LaunchClassLoader extends URLClassLoader {
             final URL classResource = findResource(resourcePath);
 
             if (classResource == null) {
-                if (DEBUG) Prisma.getLogger().info("Failed to find class resource %s", resourcePath);
                 negativeResourceCache.add(name);
                 return null;
             }
             classStream = classResource.openStream();
-
-            if (DEBUG) Prisma.getLogger().info("Loading class %s from resource %s", name, classResource.toString());
             final byte[] data = readFully(classStream);
             resourceCache.put(name, data);
             return data;
