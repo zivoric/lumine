@@ -40,6 +40,7 @@ val minecraftVersion = "1.19.4"
 
 group = project.properties["group"]!!
 version = "${minecraftVersion}_${conduitVersion}"
+description = "conduit-main"
 
 val yarnVersion = "$minecraftVersion+build.${project.properties["yarn_build"]}"
 val patchName = "$minecraftVersion-conduit_$conduitVersion"
@@ -74,7 +75,6 @@ dependencies {
     implementation(project(":prisma"))
     compileOnly(fileTree(".gradle/minecraft/$minecraftVersion/libraries"))
     compileOnly(files(namedJar))
-    implementation("net.minecraft:launchwrapper:1.12")
     implementation("org.ow2.asm:asm:9.1")
     implementation("org.ow2.asm:asm-tree:9.1")
     implementation("org.ow2.asm:asm-commons:9.1")
