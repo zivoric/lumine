@@ -1,7 +1,7 @@
 package conduit.prisma.injection;
 
-import conduit.prisma.launch.Prisma;
 import conduit.prisma.injection.util.MethodInfo;
+import conduit.prisma.launch.Prisma;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 

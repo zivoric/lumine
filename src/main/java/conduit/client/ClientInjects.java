@@ -1,6 +1,8 @@
 package conduit.client;
 
 import conduit.Conduit;
+import conduit.modification.ModManager;
+import conduit.modification.exception.ModManagementException;
 import conduit.prisma.injection.ClassInjector;
 import conduit.prisma.injection.FunctionInjector;
 import conduit.prisma.injection.VoidInjector;
@@ -8,8 +10,6 @@ import conduit.prisma.injection.annotations.CacheValue;
 import conduit.prisma.injection.annotations.InvokeInjection;
 import conduit.prisma.injection.annotations.ReplaceInjection;
 import conduit.prisma.injection.util.InjectProperties;
-import conduit.modification.ModManager;
-import conduit.modification.exception.ModManagementException;
 import net.minecraft.client.ClientBrandRetriever;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;

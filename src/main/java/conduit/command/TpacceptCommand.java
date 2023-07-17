@@ -1,13 +1,11 @@
 package conduit.command;
 
-import conduit.Conduit;
 import conduit.chat.ChatColors;
 import conduit.chat.ChatUtils;
 import conduit.command.argument.Argument;
 import conduit.command.argument.ArgumentValue;
 import conduit.command.argument.CommandInformation;
 import conduit.command.argument.types.EntityArg;
-import conduit.entity.Entity;
 import conduit.entity.Player;
 import conduit.util.IDKey;
 

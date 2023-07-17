@@ -1,6 +1,5 @@
 package conduit.prisma.injection;
 
-import conduit.prisma.launch.Prisma;
 import conduit.prisma.injection.annotations.InvokeInjection;
 import conduit.prisma.injection.annotations.ReplaceInjection;
 import conduit.prisma.injection.annotations.ReturnInjection;
@@ -9,6 +8,7 @@ import conduit.prisma.injection.util.InjectionUtils;
 import conduit.prisma.injection.util.MethodInfo;
 import conduit.prisma.injection.visitor.ReturnInvokeAdapter;
 import conduit.prisma.injection.visitor.StartInvokeAdapter;
+import conduit.prisma.launch.Prisma;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;

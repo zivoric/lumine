@@ -5,11 +5,12 @@ import conduit.ConduitConstants;
 import conduit.client.ClientInjects;
 import conduit.injects.CoreInjects;
 import conduit.modification.ModManagerCore;
-import conduit.prisma.launch.LaunchClassLoader;
-import conduit.prisma.transform.LaunchTweaker;
 import conduit.prisma.injection.ClassInjector;
+import conduit.prisma.launch.LaunchClassLoader;
 import conduit.prisma.transform.InjectorTransformer;
+import conduit.prisma.transform.LaunchTweaker;
 import conduit.util.GameEnvironment;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedList;

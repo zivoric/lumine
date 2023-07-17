@@ -1,13 +1,14 @@
-import com.google.gson.*
-import net.fabricmc.tinyremapper.*
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import net.fabricmc.tinyremapper.IMappingProvider
+import net.fabricmc.tinyremapper.OutputConsumerPath
+import net.fabricmc.tinyremapper.TinyRemapper
 import org.apache.commons.io.FileUtils
 import java.io.BufferedReader
 import java.io.FileInputStream
-import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
-import java.security.NoSuchAlgorithmException
 
 
 buildscript {
@@ -18,7 +19,7 @@ buildscript {
         }
     }
     dependencies {
-        "classpath"(group = "net.fabricmc", name = "tiny-remapper", version = "0.8.4")
+        "classpath"(group = "net.fabricmc", name = "tiny-remapper", version = "0.8.7")
         "classpath"(group = "net.fabricmc", name = "stitch", version = project.properties["stitch_version"].toString())
         "classpath"(group = "com.google.code.gson", name = "gson", version = "2.8.8")
         "classpath"(group = "commons-io", name = "commons-io", version = "2.11.0")

@@ -1,8 +1,8 @@
 package conduit.prisma.injection;
 
 import conduit.prisma.injection.util.InjectProperties;
-import conduit.prisma.injection.util.MethodInfo;
 import conduit.prisma.injection.util.MethodGrabber;
+import conduit.prisma.injection.util.MethodInfo;
 
 public class FunctionInjector<T> extends MethodInjector<T> {
     private final InjectProperties.Context context;
