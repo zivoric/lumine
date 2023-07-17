@@ -76,6 +76,7 @@ dependencies {
     implementation(project(":prisma"))
     compileOnly(fileTree(".gradle/minecraft/$minecraftVersion/libraries"))
     compileOnly(files(namedJar))
+    compileOnly("net.fabricmc:fabric-loader:0.14.9") // stops EnvType warnings from occurring
     implementation("org.ow2.asm:asm:9.1")
     implementation("org.ow2.asm:asm-tree:9.1")
     implementation("org.ow2.asm:asm-commons:9.1")
