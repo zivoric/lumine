@@ -49,9 +49,8 @@ public Identifier toMinecraft() {
 
 @Override
 public boolean equals(Object key) {
-	if (!(key instanceof IDKey))
+	if (!(key instanceof IDKey idKey))
 		return false;
-	IDKey idKey = (IDKey) key;
 	return idKey.key.equals(this.key) && idKey.domain.equals(this.domain);
 }
 
