@@ -1,2 +1,2 @@
 include("prisma")
-rootProject.name = "conduit"
+rootProject.name = "lumine"

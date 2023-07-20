@@ -36,17 +36,17 @@ java {
     }
 }
 
-val conduitVersion = project.properties["conduit_patch"]!!
+val lumineVersion = project.properties["lumine_patch"]!!
 val minecraftVersion = "1.19.4"
 
 group = project.properties["group"]!!
-version = "${minecraftVersion}_${conduitVersion}"
-description = "conduit-main"
+version = "${minecraftVersion}_${lumineVersion}"
+description = "lumine-main"
 
 val yarnVersion = "$minecraftVersion+build.${project.properties["yarn_build"]}"
-val patchName = "$minecraftVersion-conduit_$conduitVersion"
-val patchTitle = "$minecraftVersion-Conduit_$conduitVersion"
-val libraryPatch = "conduit-main-$version"
+val patchName = "$minecraftVersion-lumine_$lumineVersion"
+val patchTitle = "$minecraftVersion-Lumine_$lumineVersion"
+val libraryPatch = "lumine-main-$version"
 
 repositories {
     mavenCentral()
@@ -58,7 +58,7 @@ repositories {
     }
 }
 
-val conduitBuild = file("build/conduit")
+val lumineBuild = file("build/lumine")
 val minecraftDir = file(".gradle/minecraft/$minecraftVersion")
 val minecraftLibs = File(minecraftDir, "libraries")
 val clientJar = File(minecraftDir, "$minecraftVersion-client.jar")
@@ -66,9 +66,9 @@ val serverJar = File(minecraftDir, "$minecraftVersion-server.jar")
 val mergedJar = File(minecraftDir, "$minecraftVersion-merged.jar")
 var intermediaryJar = File(minecraftDir, "$minecraftVersion-intermediary.jar")
 var namedJar = File(minecraftDir, "$minecraftVersion-named.jar")
-val conduitNamed = file("build/libs/conduit-$version.jar")
-val conduitIntermediary = File(conduitBuild, "intermediary/intermediary-$libraryPatch.jar")
-val conduitObf = File(conduitBuild, "$libraryPatch.jar")
+val lumineNamed = file("build/libs/lumine-$version.jar")
+val lumineIntermediary = File(lumineBuild, "intermediary/intermediary-$libraryPatch.jar")
+val lumineObf = File(lumineBuild, "$libraryPatch.jar")
 val mappings = file(".gradle/mappings/yarn-$yarnVersion-mergedv2.tiny")
 val versionManifest = file(".gradle/manifest/$minecraftVersion.json")
 
@@ -204,21 +204,21 @@ tasks.compileJava {
     dependsOn("setupEnvironment")
 }
 
-tasks.register("conduitIntermediary") {
+tasks.register("lumineIntermediary") {
     dependsOn("build")
     doLast {
         namedJar = move(namedJar, minecraftLibs)
-        mapJar(conduitIntermediary, conduitNamed, mappings, minecraftLibs, "named", "intermediary")
+        mapJar(lumineIntermediary, lumineNamed, mappings, minecraftLibs, "named", "intermediary")
         namedJar = move(namedJar, minecraftDir)
     }
 }
 
-tasks.register("conduit") {
-    dependsOn("conduitIntermediary")
+tasks.register("lumine") {
+    dependsOn("lumineIntermediary")
     doLast {
         intermediaryJar = move(intermediaryJar, minecraftLibs)
-        mapJar(conduitObf, conduitIntermediary, mappings, minecraftLibs, "intermediary", "official")
-        println("Conduit jar successfully saved to ${conduitObf.absolutePath}")
+        mapJar(lumineObf, lumineIntermediary, mappings, minecraftLibs, "intermediary", "official")
+        println("Lumine jar successfully saved to ${lumineObf.absolutePath}")
         intermediaryJar = move(intermediaryJar, minecraftDir)
     }
 }
