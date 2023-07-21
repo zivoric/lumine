@@ -11,8 +11,7 @@ import java.util.List;
 
 public final class ClassInjector<T> {
     private static final InjectionCache CACHE = new InjectionCache();
-    private static final ArrayList<ClassInjector<?>> injectors = new ArrayList<>();
-    private final MethodInjector[] injectMethods;
+    private final MethodInjector<T>[] injectMethods;
     private final String targetClass;
 
     @SafeVarargs
@@ -23,15 +22,10 @@ public final class ClassInjector<T> {
         } else {
             throw new IllegalArgumentException("At least one method injector must be specified");
         }
-        injectors.add(this);
     }
 
-    public MethodInjector[] methodInjectors() {
+    public MethodInjector<T>[] methodInjectors() {
         return injectMethods;
-    }
-
-    public static List<ClassInjector<?>> injectors() {
-        return injectors;
     }
 
     public static byte[] transformAll(byte[] currentClass, Iterable<ClassInjector<?>> injectors) {
