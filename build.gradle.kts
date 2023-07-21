@@ -21,7 +21,7 @@ buildscript {
     dependencies {
         "classpath"(group = "net.fabricmc", name = "tiny-remapper", version = "0.8.7")
         "classpath"(group = "net.fabricmc", name = "stitch", version = project.properties["stitch_version"].toString())
-        "classpath"(group = "com.google.code.gson", name = "gson", version = "2.8.8")
+        "classpath"(group = "com.google.code.gson", name = "gson", version = "2.8.9")
         "classpath"(group = "commons-io", name = "commons-io", version = "2.11.0")
     }
 }
@@ -30,60 +30,118 @@ plugins {
     java
 }
 
+val javaVersion = 17
+
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(javaVersion))
     }
 }
-
-val lumineVersion = project.properties["lumine_patch"]!!
-val minecraftVersion = "1.19.4"
-
-group = project.properties["group"]!!
-version = "${minecraftVersion}_${lumineVersion}"
-description = "lumine-main"
-
-val yarnVersion = "$minecraftVersion+build.${project.properties["yarn_build"]}"
-val patchName = "$minecraftVersion-lumine_$lumineVersion"
-val patchTitle = "$minecraftVersion-Lumine_$lumineVersion"
-val libraryPatch = "lumine-main-$version"
 
 repositories {
     mavenCentral()
-    maven {
-        url = uri("https://libraries.minecraft.net/")
-    }
-    maven {
-        url = uri("https://maven.fabricmc.net/")
-    }
 }
 
-val lumineBuild = file("build/lumine")
+val apiVersion = project.properties["lumine_patch"]!!
+val minecraftVersion = "1.19.4"
+
+val yarnVersion = "$minecraftVersion+build.${project.properties["yarn_build"]}"
+
+group = project.properties["group"]!!
+version = "${minecraftVersion}_${apiVersion}"
+description = "lumine-main"
+
+/* File Values */
+
 val minecraftDir = file(".gradle/minecraft/$minecraftVersion")
 val minecraftLibs = File(minecraftDir, "libraries")
 val clientJar = File(minecraftDir, "$minecraftVersion-client.jar")
+val wrappedServerJar = File(minecraftDir, "$minecraftVersion-server-wrapped.jar")
 val serverJar = File(minecraftDir, "$minecraftVersion-server.jar")
 val mergedJar = File(minecraftDir, "$minecraftVersion-merged.jar")
 var intermediaryJar = File(minecraftDir, "$minecraftVersion-intermediary.jar")
 var namedJar = File(minecraftDir, "$minecraftVersion-named.jar")
-val lumineNamed = file("build/libs/lumine-$version.jar")
-val lumineIntermediary = File(lumineBuild, "intermediary/intermediary-$libraryPatch.jar")
-val lumineObf = File(lumineBuild, "$libraryPatch.jar")
+val intermediaryServer = File(minecraftDir, "$minecraftVersion-server-intermediary.jar")
+val namedServer = File(minecraftDir, "$minecraftVersion-server-named.jar")
 val mappings = file(".gradle/mappings/yarn-$yarnVersion-mergedv2.tiny")
 val versionManifest = file(".gradle/manifest/$minecraftVersion.json")
+val libraryTree = fileTree(".gradle/minecraft/$minecraftVersion/libraries")
 
-dependencies {
-    implementation(project(":prisma"))
-    compileOnly(fileTree(".gradle/minecraft/$minecraftVersion/libraries"))
-    compileOnly(files(namedJar))
-    compileOnly("net.fabricmc:fabric-loader:0.14.9") // stops EnvType warnings from occurring
-    implementation("org.ow2.asm:asm:9.1")
-    implementation("org.ow2.asm:asm-tree:9.1")
-    implementation("org.ow2.asm:asm-commons:9.1")
-    implementation("com.google.code.gson:gson:2.8.9")
+/* Subproject Configurations */
+
+configure(subprojects.filter{it.name != "prisma"}) {
+    apply(plugin = "java")
+    dependencies {
+        compileOnly(project(":prisma"))
+        implementation("com.google.code.gson:gson:2.8.9")
+    }
 }
 
+configure(subprojects.filter{it.name == "lumine-api" || it.name == "lumine-api-client"}) {
+    version = apiVersion
+    dependencies {
+
+    }
+}
+
+subprojects {
+    apply(plugin = "java")
+    repositories {
+        mavenCentral()
+        maven {
+            url = uri("https://maven.fabricmc.net/")
+        }
+    }
+    tasks.compileJava {
+        dependsOn(":setupEnvironment")
+    }
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(javaVersion))
+        }
+    }
+}
+
+configure(subprojects.filter{it.name == "lumine-bridge" || it.name == "lumine-bridge-client"}) {
+    version = project(":").version
+    tasks.register("intermediary") {
+        dependsOn("jar")
+        group = "build"
+        val inputFile = tasks.named("jar").get().outputs.files.singleFile
+        val outputName = "${project.name}-$version.jar"
+        val outputFile = File(buildDir, "/intermediary/$outputName")
+        inputs.file(inputFile)
+        outputs.file(outputFile)
+        doLast {
+            val dependencies = objects.fileCollection()
+                .from(configurations.compileOnly.get().resolve())
+                .from(configurations.implementation.get().resolve())
+            mapJar(outputFile, inputFile, mappings, dependencies, "named", "intermediary")
+        }
+    }
+
+    configurations.compileOnly.get().isCanBeResolved = true
+    configurations.implementation.get().isCanBeResolved = true
+}
+
+project(":lumine-bridge") {
+    dependencies {
+        compileOnly(files(namedServer))
+        compileOnly(libraryTree)
+    }
+}
+
+project(":lumine-bridge-client") {
+    dependencies {
+        compileOnly(files(namedJar))
+        compileOnly(libraryTree)
+    }
+}
+
+/* Tasks */
+
 tasks.register("downloadManifest") {
+    group = "build setup"
     val manifestFile = File(minecraftDir, "version_manifest.json")
     outputs.file(manifestFile)
     doLast {
@@ -91,15 +149,8 @@ tasks.register("downloadManifest") {
     }
 }
 
-fun getManifestVersion(manifest : File, version : String) : JsonObject {
-    val jsonObj = JsonParser.parseString(FileUtils.readFileToString(manifest, StandardCharsets.UTF_8)).asJsonObject
-    val manifestVersion = jsonObj.get("versions").asJsonArray.firstOrNull {
-        it.asJsonObject.get("id").asString.equals(version)
-    } ?: throw IllegalArgumentException("Version name $version is invalid.")
-    return manifestVersion.asJsonObject
-}
-
 tasks.register("downloadVersionManifest") {
+    group = "build setup"
     dependsOn("downloadManifest")
     doLast {
         val manifestFile = tasks.named("downloadManifest").get().outputs.files.singleFile
@@ -109,6 +160,7 @@ tasks.register("downloadVersionManifest") {
 }
 
 tasks.register("downloadMinecraft") {
+    group = "build setup"
     dependsOn("downloadVersionManifest")
     inputs.file(versionManifest)
     outputs.files(clientJar, serverJar)
@@ -117,13 +169,27 @@ tasks.register("downloadMinecraft") {
         val clientURL = jsonObj.getAsJsonObject("client").get("url").asString
         val serverURL = jsonObj.getAsJsonObject("server").get("url").asString
         download(clientURL, clientJar)
-        download(serverURL, serverJar)
+        download(serverURL, wrappedServerJar)
+    }
+}
+
+tasks.register("extractServer") {
+    group = "build setup"
+    dependsOn("downloadMinecraft")
+    inputs.file(wrappedServerJar)
+    outputs.file(serverJar)
+    doLast {
+        val trueServerJar = zipTree(wrappedServerJar).matching {
+            include("**/server-$minecraftVersion.jar")
+        }.singleFile
+        trueServerJar.copyTo(serverJar, true)
     }
 }
 
 tasks.register("mergeJars") {
-    dependsOn("downloadMinecraft")
-    inputs.files(tasks.named("downloadMinecraft").get().outputs.files)
+    group = "build setup"
+    dependsOn("extractServer")
+    inputs.files(tasks.named("extractServer").get().outputs.files)
     outputs.file(mergedJar)
     outputs.upToDateWhen {mergedJar.exists()}
     doLast {
@@ -134,6 +200,7 @@ tasks.register("mergeJars") {
 }
 
 tasks.register("downloadLibraries") {
+    group = "build setup"
     dependsOn("downloadVersionManifest")
     inputs.file(versionManifest)
     doLast {
@@ -152,6 +219,7 @@ tasks.register("downloadLibraries") {
 }
 
 tasks.register("downloadMappings") {
+    group = "build setup"
     val outputFile = File(minecraftDir, "yarn-$yarnVersion-mergedv2.jar")
     outputs.file(outputFile)
     doLast {
@@ -161,6 +229,7 @@ tasks.register("downloadMappings") {
 }
 
 tasks.register<Copy>("extractMappings") {
+    group = "build setup"
     dependsOn("downloadMappings")
     val outputDir = File(".gradle/mappings/")
     from(zipTree(tasks.named("downloadMappings").get().outputs.files.singleFile)) {
@@ -170,24 +239,23 @@ tasks.register<Copy>("extractMappings") {
     into(outputDir)
 }
 
-// used for testing purposes only
-tasks.register("mapClient") {
-    dependsOn("downloadLibraries", "downloadMinecraft", "extractMappings")
-    val intermediaryClient = File(minecraftDir, "$minecraftVersion-client-intermediary.jar")
-    val namedClient = File(minecraftDir, "$minecraftVersion-client-named.jar")
-    outputs.upToDateWhen {namedClient.exists()}
+tasks.register("mapServer") {
+    group = "build setup"
+    dependsOn("downloadLibraries", "extractServer", "extractMappings")
+    outputs.upToDateWhen {intermediaryServer.exists() && namedServer.exists()}
     doLast {
-        if (!intermediaryClient.exists()) {
-            mapJar(intermediaryClient, clientJar, mappings, minecraftLibs, "official", "intermediary")
+        if (!intermediaryServer.exists()) {
+            mapJar(intermediaryServer, serverJar, mappings, minecraftLibs, "official", "intermediary")
         }
-        if (!namedClient.exists()) {
-            mapJar(namedClient, intermediaryClient, mappings, minecraftLibs, "intermediary", "named")
+        if (!namedServer.exists()) {
+            mapJar(namedServer, intermediaryServer, mappings, minecraftLibs, "intermediary", "named")
         }
     }
 }
 
 tasks.register("setupEnvironment") {
-    dependsOn("downloadLibraries", "mergeJars", "extractMappings")
+    group = "build setup"
+    dependsOn("mergeJars", "mapServer")
     outputs.upToDateWhen {intermediaryJar.exists() && namedJar.exists()}
     doLast {
         if (!intermediaryJar.exists()) {
@@ -204,26 +272,24 @@ tasks.compileJava {
     dependsOn("setupEnvironment")
 }
 
-tasks.register("lumineIntermediary") {
-    dependsOn("build")
-    doLast {
-        namedJar = move(namedJar, minecraftLibs)
-        mapJar(lumineIntermediary, lumineNamed, mappings, minecraftLibs, "named", "intermediary")
-        namedJar = move(namedJar, minecraftDir)
-    }
+tasks.register("buildAll") {
+    group = "build"
+    dependsOn(":lumine-api:compileJava", ":lumine-api-client:compileJava",
+        ":lumine-bridge:intermediary", ":lumine-bridge-client:intermediary")
+
 }
 
-tasks.register("lumine") {
-    dependsOn("lumineIntermediary")
-    doLast {
-        intermediaryJar = move(intermediaryJar, minecraftLibs)
-        mapJar(lumineObf, lumineIntermediary, mappings, minecraftLibs, "intermediary", "official")
-        println("Lumine jar successfully saved to ${lumineObf.absolutePath}")
-        intermediaryJar = move(intermediaryJar, minecraftDir)
-    }
+/* Utility/Functions */
+
+fun getManifestVersion(manifest : File, version : String) : JsonObject {
+    val jsonObj = JsonParser.parseString(FileUtils.readFileToString(manifest, StandardCharsets.UTF_8)).asJsonObject
+    val manifestVersion = jsonObj.get("versions").asJsonArray.firstOrNull {
+        it.asJsonObject.get("id").asString.equals(version)
+    } ?: throw IllegalArgumentException("Version name $version is invalid.")
+    return manifestVersion.asJsonObject
 }
 
-fun mapJar(output : File, input : File, mappings : File, libraries : File, from : String, to : String) {
+fun mapJar(output : File, input : File, mappings : File, libraries : FileCollection, from : String, to : String) {
     if (output.exists()) {
         output.delete()
     }
@@ -239,7 +305,7 @@ fun mapJar(output : File, input : File, mappings : File, libraries : File, from 
         outputConsumer.addNonClassFiles(input.toPath())
         remapper.readInputs(input.toPath())
 
-        libraries.walk().forEach { file ->
+        libraries.files.forEach { file ->
             remapper.readClassPath(file.toPath())
         }
         remapper.apply(outputConsumer)
@@ -249,6 +315,10 @@ fun mapJar(output : File, input : File, mappings : File, libraries : File, from 
         remapper.finish()
         throw RuntimeException("Failed to remap jar", e)
     }
+}
+
+fun mapJar(output : File, input : File, mappings : File, libDir : File, from : String, to : String) {
+    mapJar(output, input, mappings, fileTree(libDir), from, to)
 }
 
 fun createMappingProvider(mappings : File, from : String, to : String): IMappingProvider {

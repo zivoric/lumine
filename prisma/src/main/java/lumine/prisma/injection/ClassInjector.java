@@ -54,9 +54,9 @@ public final class ClassInjector<T> {
 
     @SuppressWarnings("unchecked")
     public static Object invoke(String injectClass, String pairStr, boolean cacheValue, Object... args) {
-        /*Lumine.log("Invoke args length: " + args.length);
+        /*Lumine.getLogger().info("Invoke args length: " + args.length);
         for (Object arg : args) {
-            Lumine.log("Argument type: " + arg.getClass().getName());
+            Lumine.getLogger().info("Argument type: " + arg.getClass().getName());
         }*/
         MethodInfo pair = MethodInfo.fromString(pairStr);
         Object cached = CACHE.get(pair.toString());

@@ -69,9 +69,9 @@ public class MethodInfo {
     public static MethodInfo fromMethod(Method method) {
         /*try {
             Field[] fields = Method.class.getDeclaredFields();
-            Lumine.log("Method fields length: "+fields.length);
+            Lumine.getLogger().info("Method fields length: "+fields.length);
             for (Field f : fields) {
-                Lumine.log("Method field: " + f.getName() + ", " + f.getType().getName());
+                Lumine.getLogger().info("Method field: " + f.getName() + ", " + f.getType().getName());
             }
             Field sigField = Method.class.getDeclaredField("signature");
             sigField.setAccessible(true);

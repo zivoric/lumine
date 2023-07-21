@@ -1,9 +1,9 @@
 package lumine.prisma.launch;
 
-import lumine.prisma.transform.LaunchTweaker;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
+import lumine.prisma.transform.LaunchTweaker;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -13,7 +13,7 @@ import java.util.*;
 
 
 public class Prisma {
-    private static LogWrapper LOGGER = null;
+    private static LaunchLogWrapper LOGGER = null;
     private static final String DEFAULT_TWEAK = "lumine.prisma.transform.DefaultTweaker";
     public static File minecraftHome;
     public static File assetsDir;
@@ -28,7 +28,7 @@ public class Prisma {
     // class loader for all classes to be transformed
     public static LaunchClassLoader classLoader;
 
-    public static LogWrapper getLogger() {
+    public static LaunchLogWrapper getLogger() {
         return LOGGER;
     }
 
@@ -53,7 +53,7 @@ public class Prisma {
         classLoader = new LaunchClassLoader(getURLs());
         blackboard = new HashMap<>();
         Thread.currentThread().setContextClassLoader(classLoader);
-        LOGGER = LogWrapper.create();
+        LOGGER = LaunchLogWrapper.create();
         //LOGGER = LogWrapper.create(LogManager.getFormatterLogger("Prisma"));
     }
 

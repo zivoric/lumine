@@ -27,7 +27,6 @@ dependencies {
     implementation("com.google.guava:guava:28.0-jre")
 }
 
-group = "lumine"
 version = "1.0.0"
 description = "prisma"
 
