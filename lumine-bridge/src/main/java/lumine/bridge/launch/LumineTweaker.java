@@ -41,28 +41,44 @@ public class LumineTweaker implements LaunchTweaker {
 			this.args.add("--versionType");
 			this.args.add("lumine");
 		}
-		if (!this.args.contains("--lumineEnvironment") || this.args.lastIndexOf("--lumineEnvironment") == this.args.size()-1) {
-			throw new IllegalArgumentException("Lumine environment not specified, must be CLIENT or SERVER");
-		}
-		String envStr = this.args.get(this.args.indexOf("--lumineEnvironment")+1).toUpperCase();
-		GameEnvironment environment;
-		try {
-			environment = GameEnvironment.valueOf(envStr);
-		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException("Environment \""+envStr+"\" is invalid, must be CLIENT or SERVER");
-		}
-		try {
-			Lumine.setEnvironment(environment);
-		} catch (IllegalStateException e) {
-			throw new IllegalArgumentException("Environment already set at launch. This should never happen!");
-		}
+
 		try {
 			Lumine.setLogger(new Log4JLogWrapper());
 		} catch (IllegalStateException e) {
 			throw new IllegalArgumentException("Main logger already set at launch. This should never happen!");
 		}
+
+		GameEnvironment environment;
+		if (!this.args.contains("--lumineEnvironment") || this.args.lastIndexOf("--lumineEnvironment") == this.args.size()-1) {
+			try {
+				Class.forName("net.minecraft.client.main.Main", false, Thread.currentThread().getContextClassLoader());
+				environment = GameEnvironment.CLIENT;
+			} catch (ClassNotFoundException e) {
+				environment = GameEnvironment.SERVER;
+			}
+			Lumine.getLogger().warn("Environment not specified, set to inferred environment " + environment);
+		} else {
+			String envStr = this.args.get(this.args.indexOf("--lumineEnvironment") + 1).toUpperCase();
+			try {
+				environment = GameEnvironment.valueOf(envStr);
+			} catch (IllegalArgumentException e) {
+				try {
+					Class.forName("net.minecraft.client.main.Main", false, Thread.currentThread().getContextClassLoader());
+					environment = GameEnvironment.CLIENT;
+				} catch (ClassNotFoundException cnf) {
+					environment = GameEnvironment.SERVER;
+				}
+				Lumine.getLogger().warn("Environment '%s' not valid, set to inferred environment " + environment, envStr);
+			}
+			try {
+				GameEnvironment.setEnvironment(environment);
+			} catch (IllegalStateException e) {
+				throw new IllegalArgumentException("Environment already set at launch. This should never happen!");
+			}
+		}
+
 		LumineConstants.instance(version.substring(0, version.indexOf("-lumine")), game);
-		Lumine.getLogger().info("Tweaker class loaded! Running minecraft " + Lumine.getEnvironment().toString().toLowerCase() + " version " + LumineConstants.instance().MINECRAFT_VERSION_NAME);
+		Lumine.getLogger().info("Tweaker class loaded! Running minecraft " + GameEnvironment.getEnvironment().toString().toLowerCase() + " version " + LumineConstants.instance().MINECRAFT_VERSION_NAME);
 		Lumine.getLogger().info("Game directory: " + game.toURI());
 
 		ModManagerCore.initialize();
@@ -78,7 +94,7 @@ public class LumineTweaker implements LaunchTweaker {
 
 	@Override
 	public String getLaunchTarget() {
-		return Lumine.isClient() ? "net.minecraft.client.main.Main" : "net.minecraft.server.MinecraftServer";
+		return GameEnvironment.isClient() ? "net.minecraft.client.main.Main" : "net.minecraft.server.MinecraftServer";
 	}
 
 	@Override

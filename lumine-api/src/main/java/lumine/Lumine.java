@@ -1,12 +1,10 @@
 package lumine;
 
 import lumine.prisma.LogWrapper;
-import lumine.util.GameEnvironment;
 
 import java.util.List;
 
 public class Lumine {
-    private static GameEnvironment environment = null;
     private static LogWrapper mainLogger;
 
     public static void setLogger(LogWrapper logger) throws IllegalStateException {
@@ -18,20 +16,6 @@ public class Lumine {
 
     public static LogWrapper getLogger() {
         return mainLogger;
-    }
-
-    public static void setEnvironment(GameEnvironment env) throws IllegalStateException {
-        if (environment == null)
-            environment = env;
-        else
-            throw new IllegalStateException("Game environment is already set");
-    }
-    public static GameEnvironment getEnvironment() {
-        return environment;
-    }
-
-    public static boolean isClient() {
-        return getEnvironment() == GameEnvironment.CLIENT;
     }
 
 
