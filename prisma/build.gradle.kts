@@ -14,6 +14,9 @@ repositories {
     maven {
         url = uri("https://repo.maven.apache.org/maven2/")
     }
+    maven {
+        url = uri("https://maven.fabricmc.net/")
+    }
 }
 
 dependencies {
@@ -24,7 +27,10 @@ dependencies {
     compileOnly("org.ow2.asm:asm:9.1")
     compileOnly("org.ow2.asm:asm-tree:9.1")
     compileOnly("org.ow2.asm:asm-commons:9.1")
+    compileOnly("net.fabricmc:tiny-remapper:0.8.7")
     compileOnly("com.google.guava:guava:28.0-jre")
+    compileOnly("com.guardsquare:proguard-base:7.3.2")
+    compileOnly("cuchaz:enigma:2.3.1")
 }
 
 version = "1.0.0"

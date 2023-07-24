@@ -1,34 +1,32 @@
 package lumine.bridge.launch;
 
-import lumine.Lumine;
-import lumine.LumineConstants;
-import lumine.bridge.modification.ModManagerCore;
-import lumine.prisma.LogWrapper;
-import lumine.prisma.injection.ClassInjector;
+import lumine.bridge.injects.CoreInjects;
 import lumine.prisma.launch.LaunchClassLoader;
 import lumine.prisma.transform.InjectorTransformer;
 import lumine.prisma.transform.LaunchTweaker;
-import lumine.util.GameEnvironment;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import lumine.prisma.utils.GameEnvironment;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 public class LumineTweaker implements LaunchTweaker {
-	private static final Set<ClassInjector<?>> injectors = new LinkedHashSet<>();
-	private static boolean injectorsAllowed = true;
+	protected static final Set<String> injectors = new LinkedHashSet<>();
+	protected static boolean injectorsAllowed = true;
 
-	public static void addInjectors(Collection<ClassInjector<?>> injectors) throws IllegalStateException {
+	public static void addInjectors(Collection<String> injectors) throws IllegalStateException {
 		if (injectorsAllowed) {
 			LumineTweaker.injectors.addAll(injectors);
 		} else {
 			throw new IllegalStateException("Injections cannot be added after launch");
 		}
 	}
-	
+
 	private final List<String> args = new ArrayList<>();
+	private File gameDir;
+	private String gameVersion;
 
 	@Override
 	public void acceptOptions(List<String> args, File game, File assets, String version) {
@@ -42,49 +40,8 @@ public class LumineTweaker implements LaunchTweaker {
 			this.args.add("lumine");
 		}
 
-		try {
-			Lumine.setLogger(new Log4JLogWrapper());
-		} catch (IllegalStateException e) {
-			throw new IllegalArgumentException("Main logger already set at launch. This should never happen!");
-		}
-
-		GameEnvironment environment;
-		if (!this.args.contains("--lumineEnvironment") || this.args.lastIndexOf("--lumineEnvironment") == this.args.size()-1) {
-			try {
-				Class.forName("net.minecraft.client.main.Main", false, Thread.currentThread().getContextClassLoader());
-				environment = GameEnvironment.CLIENT;
-			} catch (ClassNotFoundException e) {
-				environment = GameEnvironment.SERVER;
-			}
-			Lumine.getLogger().warn("Environment not specified, set to inferred environment " + environment);
-		} else {
-			String envStr = this.args.get(this.args.indexOf("--lumineEnvironment") + 1).toUpperCase();
-			try {
-				environment = GameEnvironment.valueOf(envStr);
-			} catch (IllegalArgumentException e) {
-				try {
-					Class.forName("net.minecraft.client.main.Main", false, Thread.currentThread().getContextClassLoader());
-					environment = GameEnvironment.CLIENT;
-				} catch (ClassNotFoundException cnf) {
-					environment = GameEnvironment.SERVER;
-				}
-				Lumine.getLogger().warn("Environment '%s' not valid, set to inferred environment " + environment, envStr);
-			}
-			try {
-				GameEnvironment.setEnvironment(environment);
-			} catch (IllegalStateException e) {
-				throw new IllegalArgumentException("Environment already set at launch. This should never happen!");
-			}
-		}
-
-		LumineConstants.instance(version.substring(0, version.indexOf("-lumine")), game);
-		Lumine.getLogger().info("Tweaker class loaded! Running minecraft " + GameEnvironment.getEnvironment().toString().toLowerCase() + " version " + LumineConstants.instance().MINECRAFT_VERSION_NAME);
-		Lumine.getLogger().info("Game directory: " + game.toURI());
-
-		ModManagerCore.initialize();
-		ModManagerCore loader = ModManagerCore.getInstance();
-		loader.prepareMods();
-		loader.initializeMods();
+		gameDir = game;
+		gameVersion = version;
 	}
 
 	@Override
@@ -97,50 +54,31 @@ public class LumineTweaker implements LaunchTweaker {
 		return GameEnvironment.isClient() ? "net.minecraft.client.main.Main" : "net.minecraft.server.MinecraftServer";
 	}
 
-	@Override
-	public void injectIntoClassLoader(LaunchClassLoader classLoader) {
-		injectorsAllowed = false;
-		classLoader.registerTransformer(InjectorTransformer.class.getName(), injectors);
+	private void setup(LaunchClassLoader loader, List<String> args, File game, String version) {
+		try {
+			Class<?> cl = loader.loadClass("lumine.bridge.launch.LumineSetup");
+			Constructor<?> constr = cl.getDeclaredConstructor();
+			constr.setAccessible(true);
+			Object setup = constr.newInstance();
+			Method m = cl.getDeclaredMethod("setup", List.class, File.class, String.class);
+			m.setAccessible(true);
+			m.invoke(setup, args, game, version);
+		} catch (ClassNotFoundException e) {
+			throw new IllegalStateException("LumineSetup class was not found by classloader", e);
+		} catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+			throw new IllegalStateException("Unable to invoke Lumine setup", e);
+		}
 	}
 
-	private static class Log4JLogWrapper implements LogWrapper {
-		private static final String PREFIX = "[Lumine] ";
-		private final Logger logger = LogManager.getFormatterLogger("Lumine");
+	@Override
+	public void injectIntoClassLoader(LaunchClassLoader classLoader) {
+		injectWithDefinitions(classLoader, "");
+	}
 
-		private void log(Level level, String message, Object... args) {
-			logger.log(level, PREFIX + message, args);
-		}
-
-		private void log(Level level, String message, Throwable e) {
-			logger.log(level, PREFIX + message, e);
-		}
-
-		public void info(String message, Object... args) {
-			this.log(Level.INFO, message, args);
-		}
-
-		public void warn(String message, Object... args) {
-			log(Level.WARN, message, args);
-		}
-
-		public void warn(String message, Throwable e) {
-			log(Level.WARN, message, e);
-		}
-
-		public void debug(String message, Object... args) {
-			log(Level.DEBUG, message, args);
-		}
-
-		public void debug(String message, Throwable e) {
-			log(Level.DEBUG, message, e);
-		}
-
-		public void error(String message, Object... args) {
-			log(Level.ERROR, message, args);
-		}
-
-		public void error(String message, Throwable e) {
-			log(Level.ERROR, message, e);
-		}
+	protected void injectWithDefinitions(LaunchClassLoader classLoader, Set<String> injectors) {
+		setup(classLoader, args, gameDir, gameVersion);
+		addInjectors(injectors);
+		injectorsAllowed = false;
+		classLoader.registerTransformer(InjectorTransformer.class.getName(), injectors);
 	}
 }

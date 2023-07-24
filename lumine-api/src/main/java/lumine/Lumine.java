@@ -1,21 +1,40 @@
 package lumine;
 
-import lumine.prisma.LogWrapper;
+import lumine.prisma.utils.LogWrapper;
 
 import java.util.List;
 
 public class Lumine {
-    private static LogWrapper mainLogger;
+    private static Lumine lumine = null;
 
-    public static void setLogger(LogWrapper logger) throws IllegalStateException {
+    public static Lumine create() {
+        if (lumine != null) {
+            throw new IllegalStateException("Lumine instance cannot be created at game runtime");
+        } else {
+            lumine = new Lumine();
+        }
+        return lumine;
+    }
+
+    public static Lumine getLumine() {
+        return lumine;
+    }
+
+    private LogWrapper mainLogger;
+
+    public void setLogger(LogWrapper logger) throws IllegalStateException {
         if (mainLogger == null)
             mainLogger = logger;
         else
             throw new IllegalStateException("Main logger is already set");
     }
 
-    public static LogWrapper getLogger() {
+    public LogWrapper logger() {
         return mainLogger;
+    }
+
+    public static LogWrapper getLogger() {
+        return getLumine().logger();
     }
 
 

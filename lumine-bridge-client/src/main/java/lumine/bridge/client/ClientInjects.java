@@ -1,13 +1,13 @@
 package lumine.bridge.client;
 
-import lumine.bridge.modification.ModManagerCore;
-import lumine.prisma.injection.ClassInjector;
-import lumine.prisma.injection.FunctionInjector;
-import lumine.prisma.injection.VoidInjector;
-import lumine.prisma.injection.annotations.CacheValue;
-import lumine.prisma.injection.annotations.InvokeInjection;
-import lumine.prisma.injection.annotations.ReplaceInjection;
-import lumine.prisma.injection.util.InjectProperties;
+import lumine.modification.ModManagerCore;
+import lumine.prisma.refract.lambda.ClassInjector;
+import lumine.prisma.refract.lambda.FunctionInjector;
+import lumine.prisma.refract.lambda.VoidInjector;
+import lumine.prisma.refract.lambda.annotations.props.CacheValue;
+import lumine.prisma.refract.lambda.annotations.types.InvokeInjection;
+import lumine.prisma.refract.lambda.annotations.types.ReplaceInjection;
+import lumine.prisma.refract.definition.method.InjectPoint;
 import net.minecraft.client.ClientBrandRetriever;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
@@ -32,7 +32,7 @@ public class ClientInjects {
         // Mod loading injection
         INJECTORS.add(new ClassInjector<>(
            new VoidInjector<MinecraftClient>(MinecraftClient.class, MinecraftClient::new) {
-               @InvokeInjection(InjectProperties.Point.START)
+               @InvokeInjection(InjectPoint.START)
                public static void runClient(RunArgs args) {
                    ModManagerCore loader = ModManagerCore.getInstance();
                    loader.prepareClientMods();

@@ -1,6 +1,6 @@
 package lumine.command;
 
-import lumine.LumineConstants;
+import lumine.util.GameProfile;
 import lumine.chat.ChatUtils;
 import lumine.command.argument.Argument;
 import lumine.command.argument.CommandInformation;
@@ -19,8 +19,8 @@ public class VersionCommand extends Command {
 	public int onCommand(CommandInformation info) {
 		CommandSender sender = info.getSender();
 		sender.sendMessage(
-				ChatUtils.CHAT_PREFIX + "Running lumine version " + ChatUtils.highlightWord(LumineConstants.instance().LUMINE_VERSION)
-				+ " on minecraft version " + ChatUtils.highlightWord(LumineConstants.instance().MINECRAFT_VERSION_NAME) + ".");
+				ChatUtils.CHAT_PREFIX + "Running lumine version " + ChatUtils.highlightWord(GameProfile.instance().LUMINE_VERSION)
+				+ " on minecraft version " + ChatUtils.highlightWord(GameProfile.instance().MINECRAFT_VERSION_NAME) + ".");
 			return 0;
 	}
 

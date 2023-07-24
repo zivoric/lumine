@@ -22,6 +22,10 @@ public enum MinecraftVersion {
 		}
 		return null;
 	}
+	public static MinecraftVersion defaultVersion() {
+		return V1_19_4;
+	}
+
 	@Override
 	public String toString() {
 		return versionName;

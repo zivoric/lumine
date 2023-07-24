@@ -3,58 +3,95 @@ package lumine.prisma.launch;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
+import joptsimple.ValueConverter;
+import lumine.prisma.mapping.NamingEnvironment;
 import lumine.prisma.transform.LaunchTweaker;
+import net.fabricmc.tinyremapper.OutputConsumerPath;
+import net.fabricmc.tinyremapper.TinyRemapper;
+import net.fabricmc.tinyremapper.TinyUtils;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.*;
 
 
 public class Prisma {
     private static LaunchLogWrapper LOGGER = null;
-    private static final String DEFAULT_TWEAK = "lumine.prisma.transform.DefaultTweaker";
-    public static File minecraftHome;
-    public static File assetsDir;
-    public static Map<String,Object> blackboard;
+    private static NamingEnvironment obfEnv = null;
+    public static NamingEnvironment getObfuscationEnvironment() {
+        return obfEnv;
+    }
+
+    static final String DEFAULT_TWEAK = "lumine.prisma.transform.DefaultTweaker";
+    static File minecraftHome;
+    static File assetsDir;
+    static File minecraftJar = null;
+    static Map<String,Object> blackboard;
 
     public static void main(String[] args) {
         new Prisma().launch(args);
     }
 
     // class loader for mods/classes that must be loaded before transformation
-    public static ClassLoader preClassLoader;
+    static ClassLoader preClassLoader;
     // class loader for all classes to be transformed
-    public static LaunchClassLoader classLoader;
+    static LaunchClassLoader classLoader;
 
     public static LaunchLogWrapper getLogger() {
         return LOGGER;
     }
 
+    List<String> preLogs = new LinkedList<>();
+
     private URL[] getURLs() {
         String cp = System.getProperty("java.class.path");
         String[] paths = cp.split(File.pathSeparator);
-        URL[] urls = new URL[paths.length];
+        List<URL> urls = new ArrayList<>(paths.length);
 
+        String sep = File.separatorChar == '\\' ? "\\\\" : "/";
+        String notSep = "[^" + sep + "]+";
         for(int i = 0; i < paths.length; i++) {
             String path = paths[i];
-            try {urls[i] = (new File(path)).toURI().toURL();
+            if (path.matches(".+" + sep + "versions" + sep + notSep + sep + notSep + "\\.jar")) {
+                preLogs.add("skipping " + path);
+                minecraftJar = new File(path);
+                // don't add minecraft jar to classpath right away
+                continue;
+            }
+            try {
+                urls.add(new File(path).toURI().toURL());
             } catch (MalformedURLException e) {
                 System.out.println("Skipped loading URL " + path + ":");
                 e.printStackTrace();
             }
         }
-        return urls;
+        return urls.toArray(new URL[0]);
     }
 
     private Prisma() {
-        preClassLoader = getClass().getClassLoader();
-        classLoader = new LaunchClassLoader(getURLs());
-        blackboard = new HashMap<>();
+        try {
+            preClassLoader = getClass().getClassLoader();
+            classLoader = new LaunchClassLoader(getURLs(), preClassLoader);
+            blackboard = new HashMap<>();
+        } catch (Exception e) {
+            LOGGER = LaunchLogWrapper.create();
+            for (String preLog : preLogs) {
+                Prisma.LOGGER.info(preLog);
+            }
+            throw e;
+        }
         Thread.currentThread().setContextClassLoader(classLoader);
         LOGGER = LaunchLogWrapper.create();
-        //LOGGER = LogWrapper.create(LogManager.getFormatterLogger("Prisma"));
+        for (String preLog : preLogs) {
+            Prisma.LOGGER.info(preLog);
+        }
     }
 
     private void launch(String[] args) {
@@ -65,14 +102,15 @@ public class Prisma {
         final OptionSpec<File> gameDirOption = parser.accepts("gameDir", "Alternative game directory").withRequiredArg().ofType(File.class);
         final OptionSpec<File> assetsDirOption = parser.accepts("assetsDir", "Assets directory").withRequiredArg().ofType(File.class);
         final OptionSpec<String> tweakClassOption = parser.accepts("tweakClass", "Tweak class(es) to load").withRequiredArg().defaultsTo(DEFAULT_TWEAK);
+        final OptionSpec<NamingEnvironment> obfuscationOption = parser.accepts("obfuscation").withRequiredArg().withValuesConvertedBy(new ObfuscationEnvironmentConverter());
         final OptionSpec<String> nonOption = parser.nonOptions();
 
         final OptionSet options = parser.parse(args);
         minecraftHome = options.valueOf(gameDirOption);
         assetsDir = options.valueOf(assetsDirOption);
         final String versionName = options.valueOf(versionOption);
-        final List<String> tweakClassNames = new ArrayList<String>(options.valuesOf(tweakClassOption));
-        final List<String> argumentList = new ArrayList<String>();
+        final List<String> tweakClassNames = new ArrayList<>(options.valuesOf(tweakClassOption));
+        final List<String> argumentList = new ArrayList<>();
 
         // This list of names will be interacted with through tweakers. They can append to this list
         // any 'discovered' tweakers from their preferred mod loading mechanism
@@ -84,12 +122,85 @@ public class Prisma {
         // all tweakers can figure out if a particular argument is present, and add it if not
         blackboard.put("ArgumentList", argumentList);
 
-        // This is to prevent duplicates - in case a tweaker decides to add itself or something
-        final Set<String> allTweakerNames = new HashSet<String>();
-        // The 'definitive' list of tweakers
-        final List<LaunchTweaker> allTweakers = new ArrayList<LaunchTweaker>();
         try {
-            final List<LaunchTweaker> tweakers = new ArrayList<LaunchTweaker>(tweakClassNames.size() + 1);
+            File minecraftDir = minecraftJar.getParentFile();
+            if (!minecraftDir.exists()) {
+                throw new IllegalStateException("Version folder " + minecraftDir.getName() + " does not exist");
+            }
+
+            obfEnv = options.valueOf(obfuscationOption);
+            if (obfEnv == null) {
+                Prisma.getLogger().warn("Obfuscation environment argument not set, inferred to be OFFICIAL");
+                obfEnv = NamingEnvironment.OFFICIAL;
+            }
+            if (obfEnv == NamingEnvironment.INTERMEDIARY) {
+                // If the environment is INTERMEDIARY, try to create the intermediate version of Minecraft
+                try {
+                    Class.forName("net.minecraft.server.MinecraftServer", false, classLoader);
+                    throw new IllegalArgumentException("Minecraft is already on the classpath before launch, this is not allowed when in environment INTERMEDIARY");
+                } catch (ClassNotFoundException e) {
+                    File intermediaryDir = new File(minecraftDir, "intermediary");
+                    File intermediaryJar = new File(intermediaryDir, versionName + ".jar");
+                    if (!intermediaryJar.exists()) {
+                        // Attempt to remap the JAR to intermediary
+                        if (!minecraftJar.exists()) {
+                            throw new IllegalStateException("JAR " + versionName + ".jar does not exist");
+                        }
+                        if (!intermediaryDir.exists()) {
+                            intermediaryDir.mkdir();
+                        }
+                        InputStream mappingsStream = classLoader.getResourceAsStream("mappings/mappings.tiny");
+                        if (mappingsStream == null) {
+                            throw new IllegalStateException("No mappings found. Try adding yarn to the classpath");
+                        }
+                        BufferedReader mappingsReader = new BufferedReader(new InputStreamReader(mappingsStream));
+                        try {
+                            TinyRemapper remapper = TinyRemapper.newRemapper()
+                                    .withMappings(TinyUtils.createTinyMappingProvider(mappingsReader, "official", "intermediary"))
+                                    .build();
+                            OutputConsumerPath consumer = new OutputConsumerPath.Builder(intermediaryJar.toPath()).build();
+                            consumer.addNonClassFiles(minecraftJar.toPath());
+                            remapper.readInputs(minecraftJar.toPath());
+                            for (URL url : classLoader.getURLs()) {
+                                try {
+                                    remapper.readClassPath(Path.of(url.toURI()));
+                                } catch (URISyntaxException ex) {
+                                    throw new IllegalStateException(ex);
+                                }
+                            }
+                            remapper.apply(consumer);
+                            consumer.close();
+                            remapper.finish();
+                            Prisma.getLogger().info("Created new intermediary JAR for Minecraft version " + versionName);
+                        } catch (Exception any) {
+                            if (intermediaryJar.exists()) {
+                                intermediaryJar.delete();
+                            }
+                            throw any;
+                        }
+                    }
+                    // Add result to classpath
+                    classLoader.addURL(intermediaryJar.toURI().toURL());
+                }
+            } else {
+                // Add official JAR to classpath
+                classLoader.addURL(minecraftJar.toURI().toURL());
+            }
+        } catch (Exception e) {
+            Prisma.getLogger().error("Unable to prepare Minecraft for launch", e);
+            System.exit(1);
+        }
+
+        for (URL url : classLoader.getURLs()) {
+            Prisma.getLogger().info(url.toString());
+        }
+
+        // This is to prevent duplicates - in case a tweaker decides to add itself or something
+        final Set<String> allTweakerNames = new HashSet<>();
+        // The 'definitive' list of tweakers
+        final List<LaunchTweaker> allTweakers = new ArrayList<>();
+        try {
+            final List<LaunchTweaker> tweakers = new ArrayList<>(tweakClassNames.size() + 1);
             // The list of tweak instances - may be useful for interoperability
             blackboard.put("Tweaks", tweakers);
             // The primary tweaker (the first one specified on the command line) will actually
@@ -151,11 +262,33 @@ public class Prisma {
             final Class<?> clazz = Class.forName(launchTarget, false, classLoader);
             final Method mainMethod = clazz.getMethod("main", String[].class);
 
-            Prisma.getLogger().info("Launching minecraft with main class {%s}", launchTarget);
             mainMethod.invoke(null, (Object) argumentList.toArray(new String[0]));
         } catch (Exception e) {
-            Prisma.getLogger().error("Unable to launch", e);
+            Prisma.getLogger().error("Unable to launch Minecraft", e);
             System.exit(1);
+        }
+    }
+
+    private static class ObfuscationEnvironmentConverter implements ValueConverter<NamingEnvironment> {
+
+        @Override
+        public NamingEnvironment convert(String value) {
+            for (NamingEnvironment env : NamingEnvironment.values()) {
+                if (env.name().equalsIgnoreCase(value)) {
+                    return env;
+                }
+            }
+            throw new IllegalArgumentException("Invalid obfuscation environment '" + value + "' was provided");
+        }
+
+        @Override
+        public Class<? extends NamingEnvironment> valueType() {
+            return NamingEnvironment.class;
+        }
+
+        @Override
+        public String valuePattern() {
+            return null;
         }
     }
 }

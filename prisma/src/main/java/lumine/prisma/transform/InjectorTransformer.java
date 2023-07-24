@@ -1,6 +1,6 @@
 package lumine.prisma.transform;
 
-import lumine.prisma.injection.ClassInjector;
+import lumine.prisma.refract.lambda.ClassInjector;
 
 public class InjectorTransformer implements ClassTransformer {
 

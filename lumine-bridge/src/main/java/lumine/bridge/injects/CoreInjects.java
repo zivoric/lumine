@@ -2,17 +2,17 @@ package lumine.bridge.injects;
 
 import lumine.Lumine;
 import lumine.bridge.command.CommandBuilder;
-import lumine.bridge.modification.ModManagerCore;
+import lumine.modification.ModManagerCore;
 import lumine.command.Command;
 import lumine.command.Commands;
-import lumine.prisma.injection.ClassInjector;
-import lumine.prisma.injection.FunctionInjector;
-import lumine.prisma.injection.VoidInjector;
-import lumine.prisma.injection.annotations.CacheValue;
-import lumine.prisma.injection.annotations.InvokeInjection;
-import lumine.prisma.injection.annotations.PassInstance;
-import lumine.prisma.injection.annotations.ReplaceInjection;
-import lumine.prisma.injection.util.InjectProperties;
+import lumine.prisma.refract.lambda.ClassInjector;
+import lumine.prisma.refract.lambda.FunctionInjector;
+import lumine.prisma.refract.lambda.VoidInjector;
+import lumine.prisma.refract.lambda.annotations.props.CacheValue;
+import lumine.prisma.refract.lambda.annotations.types.InvokeInjection;
+import lumine.prisma.refract.lambda.annotations.props.PassInstance;
+import lumine.prisma.refract.lambda.annotations.types.ReplaceInjection;
+import lumine.prisma.refract.definition.method.InjectPoint;
 import lumine.util.LRegistry;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.MinecraftServer;
@@ -28,7 +28,7 @@ public final class CoreInjects {
         // CommandManager modifications
         INJECTORS.add(new ClassInjector<>(
                 new VoidInjector<CommandManager>(CommandManager::new) {
-                    @InvokeInjection(InjectProperties.Point.RETURN)
+                    @InvokeInjection(InjectPoint.RETURN)
                     @PassInstance
                     static void init(CommandManager instance, CommandManager.RegistrationEnvironment commandEnvironment, CommandRegistryAccess access) {
                         Commands.get().forEach(cmd -> updateRegistry(instance, cmd));
@@ -70,7 +70,7 @@ public final class CoreInjects {
         ));
         INJECTORS.add(new ClassInjector<>(
                 new VoidInjector<net.minecraft.server.Main>(net.minecraft.server.Main::main) {
-                    @InvokeInjection(InjectProperties.Point.START)
+                    @InvokeInjection(InjectPoint.START)
                     public static void initializeMods(String[] args) {
                         ModManagerCore loader = ModManagerCore.getInstance();
                         loader.prepareServerMods();

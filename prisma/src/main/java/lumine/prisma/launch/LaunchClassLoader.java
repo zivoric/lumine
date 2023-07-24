@@ -1,6 +1,8 @@
 package lumine.prisma.launch;
 
 import lumine.prisma.transform.ClassTransformer;
+import net.fabricmc.tinyremapper.TinyRemapper;
+import net.fabricmc.tinyremapper.TinyUtils;
 
 import java.io.*;
 import java.lang.reflect.Constructor;
@@ -21,7 +23,7 @@ import java.util.jar.Manifest;
 public class LaunchClassLoader extends URLClassLoader {
     public static final int BUFFER_SIZE = 1 << 12;
     private final List<URL> sources;
-    private final ClassLoader parent = getClass().getClassLoader();
+    private final ClassLoader parent;
 
     private final List<ClassTransformer> transformers = new ArrayList<>(2);
     private final Map<String, Class<?>> cachedClasses = new ConcurrentHashMap<>();
@@ -41,8 +43,9 @@ public class LaunchClassLoader extends URLClassLoader {
     private static final String[] RESERVED_NAMES = {"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"};
     private static File tempFolder = null;
 
-    public LaunchClassLoader(URL[] sources) {
+    public LaunchClassLoader(URL[] sources, ClassLoader parent) {
         super(sources, null);
+        this.parent = parent;
         this.sources = new ArrayList<>(Arrays.asList(sources));
 
         // classloader inclusions (overrides any exclusions)
@@ -62,6 +65,32 @@ public class LaunchClassLoader extends URLClassLoader {
         addTransformerExclusion("com.google.common.");
         addTransformerExclusion("org.bouncycastle.");
         addTransformerExclusion("lumine.");
+    }
+
+    private TinyRemapper fromIntermediaryRemapper = null;
+    private TinyRemapper toIntermediaryRemapper = null;
+
+    private TinyRemapper getFromIntermediaryRemapper() {
+        if (fromIntermediaryRemapper == null) {
+            getIntermediaryRemapper("intermediate", "official");
+        }
+        return fromIntermediaryRemapper;
+    }
+    private TinyRemapper getToIntermediaryRemapper() {
+        if (toIntermediaryRemapper == null) {
+            getIntermediaryRemapper("official", "intermediate");
+        }
+        return toIntermediaryRemapper;
+    }
+    private TinyRemapper getIntermediaryRemapper(String from, String to) {
+        InputStream mappingsStream = this.getResourceAsStream("mappings/mappings.tiny");
+        if (mappingsStream == null) {
+            throw new IllegalStateException("No mappings found. Try adding yarn to the classpath");
+        }
+        BufferedReader mappingsReader = new BufferedReader(new InputStreamReader(mappingsStream));
+        return TinyRemapper.newRemapper()
+                .withMappings(TinyUtils.createTinyMappingProvider(mappingsReader, from, to))
+                .build();
     }
 
     public void registerTransformer(String transformerClassName, Object... args) {
@@ -111,7 +140,7 @@ public class LaunchClassLoader extends URLClassLoader {
         if (!included) {
             for (final String exception : classLoaderExceptions) {
                 if (name.startsWith(exception)) {
-                    return parent.loadClass(name);
+                    return this.parent.loadClass(name);
                 }
             }
         }
@@ -148,7 +177,8 @@ public class LaunchClassLoader extends URLClassLoader {
 
             CodeSigner[] signers = null;
 
-            if (lastDot > -1 && !untransformedName.startsWith("net.minecraft.")) {
+            Prisma.getLogger().info("Loading class %s", name);
+            if (lastDot > -1) {
                 if (urlConnection instanceof final JarURLConnection jarURLConnection) {
                     final JarFile jarFile = jarURLConnection.getJarFile();
 
@@ -249,9 +279,10 @@ public class LaunchClassLoader extends URLClassLoader {
         return null;
     }
 
-    private byte[] runTransformers(final String name, final String transformedName, byte[] basicClass) {
+    private byte[] runTransformers(final String name, final String transformedName, final byte[] basicClass) {
         for (final ClassTransformer transformer : transformers) {
-            basicClass = transformer.transform(name, transformedName, basicClass);
+            byte[] transformedClass = transformer.transform(name, transformedName, basicClass);
+            return transformedClass;
         }
         return basicClass;
     }
