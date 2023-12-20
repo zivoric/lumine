@@ -1,5 +1,8 @@
 package lumine.config.type;
 
-public abstract class TypePrimitive extends TypeAny {
-
+public class TypePrimitive extends TypeAny {
+    @Override
+    public boolean canRetrieveFrom(TypeAny other) {
+        return other instanceof TypePrimitive;
+    }
 }

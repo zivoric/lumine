@@ -5,12 +5,13 @@ public class TypeArray<T extends TypeAny> extends TypeAny {
     public TypeArray(T type) {
         this.type = type;
     }
+
     @Override
     public boolean canRetrieveFrom(TypeAny other) {
-        return other instanceof TypeArray<?> arr && getType().canRetrieveFrom(arr.getType());
+        return other instanceof TypeArray<?> arr && getComponentType().canRetrieveFrom(arr.getComponentType());
     }
 
-    public T getType() {
+    public T getComponentType() {
         return type;
     }
 
@@ -21,6 +22,6 @@ public class TypeArray<T extends TypeAny> extends TypeAny {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof TypeArray<?> arr && getType().equals(arr.getType());
+        return obj instanceof TypeArray<?> arr && getComponentType().equals(arr.getComponentType());
     }
 }

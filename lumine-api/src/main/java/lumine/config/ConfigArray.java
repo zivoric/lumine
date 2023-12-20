@@ -26,12 +26,16 @@ public class ConfigArray<T extends TypeAny, U extends ConfigEntry<T>> extends Co
         return Collections.unmodifiableList(entries);
     }
 
+    public Object[] asPrimitiveArray() {
+        return asPrimitiveArray(new Object[0]);
+    }
+
     @SuppressWarnings("unchecked")
     public <V> V[] asPrimitiveArray(V[] arrType) {
         Class<?> c = arrType.getClass().getComponentType();
         if (size() == 0) {
             return (V[]) Array.newInstance(c, 0);
-        } else if (type.getType() instanceof TypePrimitive) {
+        } else if (type.getComponentType() instanceof TypePrimitive) {
             V[] array = (V[]) Array.newInstance(c, size());
             Function<ConfigPrimitive<?,?>,?> func;
             if (c == Object.class) {
@@ -69,7 +73,7 @@ public class ConfigArray<T extends TypeAny, U extends ConfigEntry<T>> extends Co
             }
             return array;
         } else {
-            throw new IllegalArgumentException("Array holds non-primitive type " + type.getType());
+            throw new IllegalArgumentException("Array holds non-primitive type " + type.getComponentType());
         }
     }
 
@@ -111,5 +115,19 @@ public class ConfigArray<T extends TypeAny, U extends ConfigEntry<T>> extends Co
             add(index++, iterator.next());
         }
         return changed;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder("[");
+        int i = 0;
+        for (U u : entries) {
+            builder.append(u.toString());
+            if (i > size() - 1) {
+                builder.append(", ");
+            }
+            i++;
+        }
+        return builder.append("]").toString();
     }
 }

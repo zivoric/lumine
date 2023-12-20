@@ -18,4 +18,9 @@ public abstract class ConfigPrimitive<T extends TypeAny,V> extends ConfigEntry<T
         this.value = Objects.requireNonNull(value);
         return oldValue;
     }
+
+    @Override
+    public String toString() {
+        return this.value.toString();
+    }
 }

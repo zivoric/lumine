@@ -35,4 +35,9 @@ public class ConfigPlaceholder<T extends TypeAny> extends ConfigEntry<T> {
     private UnsupportedOperationException invalid() {
         return new UnsupportedOperationException("Cannot get placeholder as a valued entry");
     }
+
+    @Override
+    public String toString() {
+        return "Placeholder(" + type + ")";
+    }
 }

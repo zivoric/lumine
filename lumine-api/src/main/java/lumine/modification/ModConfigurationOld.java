@@ -2,29 +2,27 @@ package lumine.modification;
 
 import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
-import lumine.config.*;
-import lumine.config.type.TypeNumber;
-import lumine.config.type.TypeString;
 import lumine.util.GameProfile;
 import lumine.util.IDKey;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 
-public class ModConfiguration extends JsonConfiguration {
-    private HashMap<String, ConfigEntry<?>> getDefaults(String name) {
-        return new HashMap<>() {{
-            put("version", new ConfigPlaceholder<>(new TypeNumber()));
-            put("name", new ConfigPlaceholder<>(new TypeString()));
-            put("package", new ConfigPlaceholder<>(new TypeString()));
-            put("minVersion", new ConfigNumber(GameProfile.instance().MINECRAFT_VERSION.getNumericVersion()));
-            put("dependencies", new ConfigArray<TypeString, ConfigString>(new TypeString()));
-            put("id", new ConfigDynamic<>("name", new TypeString(), name -> new ConfigString(getValidId(name.asString()))));
-        }};
-    }
+public class ModConfigurationOld {
     public static class ConfigValues {
         private static final List<String> REQUIRED_ARGS = Arrays.asList("version", "name", "package", "modClass");
+        private HashMap<String, JsonElement> getDefaults() {
+            return new HashMap<>() {{
+                put("minVersion", new JsonPrimitive(GameProfile.instance().MINECRAFT_VERSION.getNumericVersion()));
+                put("dependencies", new JsonArray());
+            }};
+        }
+
+        // removable
         private String version;
         private String name;
         @SerializedName("package")
@@ -59,8 +57,7 @@ public class ModConfiguration extends JsonConfiguration {
     }
     private final ConfigValues values;
     private final JsonObject json;
-    public ModConfiguration(InputStream stream) throws IllegalArgumentException {
-        super(stream, getDefaults());
+    public ModConfigurationOld(InputStream stream) throws IllegalArgumentException {
         Gson gson = new GsonBuilder().create();
         try {
             String jsonStr = new String(stream.readAllBytes());
@@ -83,11 +80,11 @@ public class ModConfiguration extends JsonConfiguration {
         return json;
     }
 
-    public String getValidId(String baseId) {
-        /*String baseId = this.getValues().getId().toLowerCase(Locale.ROOT);
+    public String getValidId() {
+        String baseId = this.getValues().getId().toLowerCase(Locale.ROOT);
         if (baseId.isEmpty()) {
             baseId = this.getValues().getName();
-        }*/
+        }
         char[] chars = baseId.toCharArray();
         StringBuilder validId = new StringBuilder();
         for (int i = 0; i < chars.length; i++) {

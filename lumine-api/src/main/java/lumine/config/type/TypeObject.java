@@ -9,12 +9,16 @@ public class TypeObject extends TypeAny {
     public TypeObject(Map<String, TypeAny> types) {
         this.types = types;
     }
+    
     @Override
     public boolean canRetrieveFrom(TypeAny other) {
+        // keys must be the same in order for the default checking to work
         if (other instanceof TypeObject otherObj) {
             for (Map.Entry<String, TypeAny> entry : types.entrySet()) {
                 // if any type in this is not a supertype of the corresponding type in other, return false
-                if (!entry.getValue().canRetrieveFrom(otherObj.getTypes().get(entry.getKey()))) {
+                TypeAny type = entry.getValue();
+                TypeAny otherType = otherObj.getTypes().get(entry.getKey());
+                if (!type.canRetrieveFrom(otherType) || (!type.isRemovable() && otherType.isRemovable())) {
                     return false;
                 }
             }
@@ -36,6 +40,9 @@ public class TypeObject extends TypeAny {
             builder.append(entry.getKey())
                     .append(": ")
                     .append(entry.getValue().toString());
+            if (!entry.getValue().isRemovable()) {
+                builder.append("!");
+            }
             if (i > types.size() - 1) {
                 builder.append(", ");
             }
@@ -46,7 +53,7 @@ public class TypeObject extends TypeAny {
 
     @Override
     public boolean equals(Object other) {
-        if (other instanceof TypeObject otherObj) {
+        if (other instanceof TypeObject otherObj && types.keySet().equals(otherObj.types.keySet())) {
             for (Map.Entry<String, TypeAny> entry : types.entrySet()) {
                 // if any type in this is not the same as the corresponding type in other, return false
                 if (!entry.getValue().equals(otherObj.getTypes().get(entry.getKey()))) {
